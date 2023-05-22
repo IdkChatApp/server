@@ -2,3 +2,5 @@
 /_
 1.txt
 *.zip
+*.db
+*.sqlite3
