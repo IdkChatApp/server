@@ -1,0 +1,71 @@
+.auth-form {
+    grid-row-start: 5;
+    grid-column-start: 6;
+
+    grid-row-end: 12;
+    grid-column-end: 11;
+
+    border: 5px solid;
+    border-image: linear-gradient(to bottom, var(--gradient-1), var(--gradient-2)) 1;
+    background-color: rgb(var(--bg-color-rgb), .5);
+    opacity: 1;
+}
+
+.auth-form:hover {
+    background-color: rgb(var(--bg-color-rgb), .85);;
+}
+
+.content-auth {
+    height: 90vh;
+    background-color: rgb(var(--bg-color-rgb), .5);
+}
+
+.auth-form-title {
+    grid-row-start: 2;
+    grid-column-start: 2;
+
+    grid-row-end: 4;
+    grid-column-end: 15;
+
+    font-size: 32px;
+    text-align: center;
+}
+
+.auth-form-input {
+    grid-column-start: 2;
+    grid-column-end: 15;
+}
+
+.auth-form-login {
+    grid-row-start: 4;
+    grid-row-end: 6;
+}
+
+.auth-form-password {
+    grid-row-start: 7;
+    grid-row-end: 9;
+}
+
+.auth-form-password2 {
+    grid-row-start: 10;
+    grid-row-end: 12;
+}
+
+.auth-form-authbutton {
+    grid-row-start: 13;
+    grid-row-end: 15;
+}
+
+.auth-form-input > input, .auth-form-input > button {
+    width: 100%;
+    height: 100%;
+    font-size: 18px;
+}
+
+.auth-form-input > input {
+    padding-left: 10px;
+    background-color: var(--bg-color-messages);
+    border: 1px solid;
+    border-image: linear-gradient(to top, var(--gradient-1), var(--gradient-2)) 1;
+    color: var(--text-color);
+}

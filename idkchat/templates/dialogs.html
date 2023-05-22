@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="IdkChat - simple and minimalistic chat app.">
+    <meta name="keywords" content="idkchat,chat,simple,minimalistic,real-time">
+    <meta name="author" content="RuslanUC">
+    <title>IdkChat - Dialogs</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/dialogs.css">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="/static/js/theme.js"></script>
+    <script src="/static/js/main.js"></script>
+</head>
+<body class="theme-dark">
+    <main class="content content-dialogs grid-container" style="height: 90vh;">
+        <div class="dialog-add">
+            <button onclick="newDialog();">Add</button>
+        </div>
+
+        <div class="dialogs-list">
+            <ul class="dialogs" id="dialogs"></ul>
+        </div>
+
+        <div class="dialog-title" id="dialog-title">
+            Select dialog
+        </div>
+
+        <div class="messages-list">
+            <ul class="messages" id="messages"></ul>
+        </div>
+
+        <div class="dialog-input">
+            <input type="text" name="message" placeholder="Text..." id="message-input">
+        </div>
+
+        <div class="dialog-send-button">
+            <button onclick="sendMessage();">Send</button>
+        </div>
+    </main>
+
+    <footer class="footer text-center">
+        <p>IdkChat 2022</p>
+        Support: <a href="mailto:idkchat@pepega.ml">idkchat@pepega.ml</a>
+    </footer>
+
+    <script src="/static/js/dialogs.js"></script>
+</body>
+</html>

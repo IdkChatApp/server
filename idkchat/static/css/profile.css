@@ -1,0 +1,62 @@
+.content-profile {
+    height: 90vh;
+    background-color: rgb(var(--bg-color-rgb), .5);
+    padding: 16px 1% 12px !important;
+}
+
+.content-profile:hover {
+    background-color: rgb(var(--bg-color-rgb), .85);;
+}
+
+.avatar-img {
+    grid-row-start: 2;
+    grid-column-start: 2;
+
+    grid-row-end: 5;
+    grid-column-end: 5;
+}
+
+.avatar-img > img {
+    height: 100%;
+    border-radius: 50%;
+    width: auto;
+}
+
+.avatar-img > img:hover {
+    cursor: pointer;
+}
+
+.username {
+    grid-row-start: 1;
+    grid-column-start: 1;
+
+    grid-row-end: 2;
+    grid-column-end: 16;
+
+    text-align: center;
+}
+
+.username > span {
+    font-size: 32px;
+}
+
+.logout-button {
+    grid-row-start: 1;
+    grid-column-start: 15;
+
+    grid-row-end: 2;
+    grid-column-end: 16;
+}
+
+.avatar-remove-button {
+    grid-row-start: 5;
+    grid-column-start: 2;
+
+    grid-row-end: 6;
+    grid-column-end: 4;
+}
+
+.logout-button > button, .avatar-remove-button > button {
+    height: 100%;
+    width: 100%;
+}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="IdkChat - simple and minimalistic chat app.">
+    <meta name="keywords" content="idkchat,chat,simple,minimalistic,real-time">
+    <meta name="author" content="RuslanUC">
+    <title>IdkChat - Auth</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/main.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/auth.css">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="/static/js/theme.js"></script>
+    <script src="/static/js/main.js"></script>
+</head>
+<body class="theme-dark">
+<main class="content content-auth grid-container">
+    <div class="auth-form grid-container">
+        <div class="auth-form-title">
+            <a href="javascript:void(0);" onclick="toggleMode();" id="auth-form-title">Login</a>
+            <a href="javascript:void(0);" onclick="toggleMode();" style="font-size: 14px;" id="auth-form-title2">or Register (click here)</a>
+        </div>
+
+        <div class="auth-form-input auth-form-login">
+            <input type="text" name="login" placeholder="Login" id="login" required>
+        </div>
+
+        <div class="auth-form-input auth-form-password">
+            <input type="password" name="password" placeholder="Password..." id="password" required>
+        </div>
+
+        <div class="auth-form-input auth-form-password2" id="password2-div" style="display: none;">
+            <input type="password" name="password" placeholder="Repeat password..." id="password2">
+        </div>
+
+        <div class="auth-form-input auth-form-authbutton" id="btn_login">
+            <button onclick="login();">Login</button>
+        </div>
+
+        <div class="auth-form-input auth-form-authbutton" id="btn_register" style="display: none;">
+            <button onclick="register();">Register</button>
+        </div>
+    </div>
+</main>
+<footer class="footer text-center" style="opacity: .6;">
+    <p>IdkChat 2022</p>
+    Support: <a href="mailto:idkchat@pepega.ml">idkchat@pepega.ml</a>
+</footer>
+
+<script src="/static/js/auth.js"></script>
+</body>
+</html>
