@@ -1,9 +1,26 @@
-from base64 import b64decode, b64encode
+from base64 import b64decode as _b64decode, b64encode as _b64encode
 from hashlib import sha512
 from hmac import new
 from json import loads, dumps
 from time import time
 from typing import Optional, Union
+
+def b64decode(data: Union[str, bytes]) -> bytes:
+    if isinstance(data, str):
+        data = data.encode("utf8")
+    data += b'=' * (-len(data) % 4)
+    for search, replace in ((b'-', b'+'), (b'_', b'/'), (b',', b'')):
+        data = data.replace(search, replace)
+    return _b64decode(data)
+
+
+def b64encode(data: Union[str, bytes]) -> str:
+    if isinstance(data, str):
+        data = data.encode("utf8")
+    data = _b64encode(data).decode("utf8")
+    for search, replace in (('+', '-'), ('/', '_'), ('=', '')):
+        data = data.replace(search, replace)
+    return data
 
 
 class JWT:
