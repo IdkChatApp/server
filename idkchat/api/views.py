@@ -1,7 +1,9 @@
 from hashlib import sha256
 from time import time
+from typing import Optional
 
 from django.conf import settings
+from django.db.models import Q
 from rest_framework import permissions, status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -9,9 +11,9 @@ from rest_framework.views import APIView
 from simplesrp.ng_values import NG
 from simplesrp.server.srp import Verifier
 
-from .authentication import IdkIsAuthenticated
-from .models import User, Session, PendingAuth
-from .serializers import RegisterSerializer, LoginStartSerializer, LoginSerializer
+from .models import User, Session, PendingAuth, Dialog, Message
+from .serializers import RegisterSerializer, LoginStartSerializer, LoginSerializer, DialogSerializer, MessageSerializer, \
+    MessageCreateSerializer, DialogCreateSerializer
 from .utils import JWT
 
 
@@ -97,3 +99,61 @@ class RegisterView(APIView):
         session = Session.objects.create(user=user)
         return Response({"token": session.toJWT()})
 
+
+class LogoutView(APIView):
+    def post(self, request: Request, format=None) -> Response:
+        request.auth.delete()
+        return Response(status=204)
+
+
+class DialogsView(APIView):
+    def get(self, request: Request, format=None) -> Response:
+        user = request.user
+        dialogs: list[Dialog] = Dialog.objects.filter(Q(user_1__id=user.id) | Q(user_2__id=user.id))
+        dialogs_json = [DialogSerializer(dialog, context={"current_user": user}).data for dialog in dialogs]
+        return Response(dialogs_json)
+
+    def post(self, request: Request, format=None) -> Response:
+        serializer = DialogCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if (other_user := User.objects.filter(login=serializer.data["username"]).first()) is None:
+            return Response(
+                {"login": ["User with login does not exist."]},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        dialog = Dialog.objects.create(user_1=request.user, user_2=other_user)
+        return Response(DialogSerializer(dialog, context={"current_user": request.user}).data)
+
+
+class MessagesView(APIView):
+    def get(self, request: Request, dialog_id: int, format=None) -> Response:
+        user = request.user
+        dialog: Optional[Dialog] = Dialog.objects.filter((Q(user_1__id=user.id) | Q(user_2__id=user.id)) & Q(id=dialog_id))
+        if dialog is None:
+            return Response(
+                {"dialog": ["This dialog does not exist."]},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        messages: list[Message] = Message.objects.filter(dialog__id=dialog.id)
+        messages_json = [MessageSerializer(message, context={"current_user": user}).data for message in messages]
+        return Response(messages_json)
+
+    def post(self, request: Request, dialog_id: int, format=None) -> Response:
+        user = request.user
+        dialog: Optional[Dialog] = Dialog.objects.filter((Q(user_1__id=user.id) | Q(user_2__id=user.id)) & Q(id=dialog_id))
+        if dialog is None:
+            return Response(
+                {"dialog": ["This dialog does not exist."]},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = MessageCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        message = Message.objects.create(dialog=dialog, author=request.user, text=serializer.data["text"])
+        return Response(MessageSerializer(message, context={"current_user": request.user}).data)

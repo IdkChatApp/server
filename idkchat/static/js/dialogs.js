@@ -4,6 +4,8 @@ const messages = document.getElementById("messages");
 const message_input = document.getElementById("message-input");
 
 window.DIALOGS = {};
+window.MESSAGES = [];
+window.MESSAGES_CACHE = {};
 window.CURRENT_DIALOG = 0;
 window._WS = null;
 
@@ -52,6 +54,9 @@ function ensureImageLoaded(image_element, default_src) {
 }
 
 function addDialog(dialog_id, username, avatar_url, new_messages) {
+    if(!(dialog_id in MESSAGES_CACHE)) {
+        MESSAGES_CACHE[dialog_id] = {"messages": [], "message_ids": []};
+    }
     if(dialog_id in DIALOGS) {
         DIALOGS[dialog_id]["username"] = username;
         DIALOGS[dialog_id]["new_messages"] = new_messages;
@@ -88,13 +93,20 @@ function clearMessages() {
 }
 
 function addMessage(dialog_id, message_id, type, text, time) {
-    if(document.getElementsByClassName(`message-id-${message_id}`).length > 0 || message_id < 0)
-        return;
+    if(!MESSAGES_CACHE[dialog_id]["message_ids"].includes(message_id)) {
+        MESSAGES_CACHE[dialog_id]["message_ids"].push(message_id);
+        MESSAGES_CACHE[dialog_id]["messages"].push({"id": message_id, "type": type, "text": text, "time": time});
+    }
     if(getSelectedDialog() !== dialog_id)
         return;
+    if(document.getElementById(`message-id-${message_id}`))
+        return;
+
+    let idx = sortedIndex(MESSAGES, message_id);
+    MESSAGES.splice(idx, 0, message_id);
 
     let message = document.createElement("li");
-    message.classList.add(`message-id-${message_id}`);
+    message.id = `message-id-${message_id}`;
     message.classList.add(type === 0 ? "my-message" : "message");
 
     let date = new Date(time);
@@ -108,9 +120,18 @@ function addMessage(dialog_id, message_id, type, text, time) {
     message.appendChild(type === 0 ? message_text : timestamp);
     message.innerHTML += "\n";
     message.appendChild(type === 0 ? timestamp : message_text);
-    messages.appendChild(message);
 
-    messages.scrollTo(0, messages.scrollHeight);
+    let insertLast = idx === MESSAGES.length-1;
+    let before = MESSAGES[idx+1];
+    before = document.getElementById(`message-id-${before}`);
+    if(insertLast || !before)
+        messages.appendChild(message);
+    else {
+        messages.insertBefore(message, before);
+    }
+
+    if(insertLast)
+        messages.scrollTo(0, messages.scrollHeight);
 }
 
 function padDate(d) {
@@ -140,7 +161,7 @@ async function sendMessage() {
     });
     if(resp.status === 401) {
         localStorage.removeItem("token");
-        location.href = "/auth.html";
+        location.href = "/auth";
     }
 
     if(resp.status >= 400 && resp.status < 405) {
@@ -166,7 +187,7 @@ async function fetchDialogs() {
     });
     if(resp.status === 401) {
         localStorage.removeItem("token");
-        location.href = "/auth.html";
+        location.href = "/auth";
     }
 
     for(let dialog of await resp.json()) {
@@ -187,7 +208,7 @@ async function fetchMessages(dialog_id) {
     });
     if(resp.status === 401) {
         localStorage.removeItem("token");
-        location.href = "/auth.html";
+        location.href = "/auth";
     }
 
     for(let message of await resp.json()) {
@@ -207,9 +228,13 @@ function selectDialog(dialog_id) {
 
     dialog_to_sel.classList.add("dialog-selected");
     dialog_title.innerText = DIALOGS[dialog_id].username;
+    window.MESSAGES = [];
     clearMessages();
 
     window.CURRENT_DIALOG = dialog_id;
+    for(let message of MESSAGES_CACHE[dialog_id]["messages"]) {
+        addMessage(dialog_id, message["id"], message["type"], message["text"], message["time"]);
+    }
     fetchMessages(dialog_id).then();
 
     if(DIALOGS[dialog_id]["new_messages"]) {
@@ -237,7 +262,7 @@ async function newDialog() {
     });
     if(resp.status === 401) {
         localStorage.removeItem("token");
-        location.href = "/auth.html";
+        location.href = "/auth";
     }
 
     let jsonResp = await resp.json();
@@ -314,7 +339,7 @@ function initWs() {
     ws.addEventListener("close", (event) => {
         if(event.code === 4001) {
             localStorage.removeItem("token");
-            location.href = "/auth.html";
+            location.href = "/auth";
             return;
         }
         setTimeout(() => {

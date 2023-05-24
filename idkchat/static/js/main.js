@@ -1,3 +1,5 @@
+const exports = {};
+
 function isLocalNetwork(hostname = window.location.hostname) {
     return (
         (['localhost', '127.0.0.1', '', '::1'].includes(hostname))
@@ -9,11 +11,11 @@ function isLocalNetwork(hostname = window.location.hostname) {
 
 if(isLocalNetwork()) {
     // Local enviroment
-    window.API_ENDPOINT = "https://127.0.0.1:8000/api/v1";
-    window.WS_ENDPOINT = "wss://127.0.0.1:8000/ws";
+    window.API_ENDPOINT = "http://127.0.0.1:8000/api";
+    window.WS_ENDPOINT = "ws://127.0.0.1:8000/ws";
 } else {
     // Production enviroment
-    window.API_ENDPOINT = "https://idkchat-api.pepega.ml/api/v1";
+    window.API_ENDPOINT = "https://idkchat-api.pepega.ml/api";
     window.WS_ENDPOINT = "wss://idkchat-api.pepega.ml/ws";
 }
 window.CDN = "https://link.storjshare.io/s/jwadfbzk4qjnfgqwp52yzhryzata/idkchat";
@@ -35,4 +37,15 @@ if (document.readyState === "loading") {
 function avatarUrl(user_id, avatar_hash) {
     let ext = avatar_hash.startsWith("a_") ? "gif" : "png";
     return `${CDN}/avatars/${user_id}/${avatar_hash}.${ext}?${window.AVATAR_QUERY}`;
+}
+
+function sortedIndex(array, value) {
+    let low = 0, high = array.length;
+
+    while (low < high) {
+        let mid = (low + high) >>> 1;
+        if (array[mid] < value) low = mid + 1;
+        else high = mid;
+    }
+    return low;
 }

@@ -22,10 +22,10 @@
 
 .auth-form-title {
     grid-row-start: 2;
-    grid-column-start: 2;
+    grid-column-start: 5;
 
     grid-row-end: 4;
-    grid-column-end: 15;
+    grid-column-end: 12;
 
     font-size: 32px;
     text-align: center;

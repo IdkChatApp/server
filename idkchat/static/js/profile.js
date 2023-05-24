@@ -5,7 +5,7 @@ const avatar_remove_btn = document.getElementById("avatar-remove-button");
 
 logout_btn.addEventListener("click", () => {
     localStorage.removeItem("token");
-    location.href = "/auth.html";
+    location.href = "/auth";
 });
 
 avatar_img.addEventListener("click", () => {
@@ -45,7 +45,7 @@ async function uploadAvatar(avatar_b64) {
     });
     if(resp.status === 401) {
         localStorage.removeItem("token");
-        location.href = "/auth.html";
+        location.href = "/auth";
     }
 
     let profileData = await resp.json();
@@ -60,7 +60,7 @@ async function fetchProfileData() {
     });
     if(resp.status === 401) {
         localStorage.removeItem("token");
-        location.href = "/auth.html";
+        location.href = "/auth";
     }
 
     let profileData = await resp.json();
