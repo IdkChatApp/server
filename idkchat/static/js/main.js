@@ -35,6 +35,7 @@ if (document.readyState === "loading") {
 }
 
 function avatarUrl(user_id, avatar_hash) {
+    if(avatar_hash === null) return DEFAULT_AVATAR;
     let ext = avatar_hash.startsWith("a_") ? "gif" : "png";
     return `${CDN}/avatars/${user_id}/${avatar_hash}.${ext}?${window.AVATAR_QUERY}`;
 }

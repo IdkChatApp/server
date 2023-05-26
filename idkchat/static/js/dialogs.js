@@ -53,7 +53,10 @@ function ensureImageLoaded(image_element, default_src) {
     }
 }
 
-function addDialog(dialog_id, username, avatar_url, new_messages) {
+function addDialog(dialog) {
+    let dialog_id = dialog["id"];
+    let user = dialog["user"];
+
     if(!(dialog_id in MESSAGES_CACHE)) {
         MESSAGES_CACHE[dialog_id] = {"messages": [], "message_ids": []};
     }
@@ -63,29 +66,32 @@ function addDialog(dialog_id, username, avatar_url, new_messages) {
         updateDialog(dialog_id);
         return;
     }
-    DIALOGS[dialog_id] = {"username": username, "avatar_url": avatar_url, "dialog_id": dialog_id, "new_messages": new_messages};
+    DIALOGS[dialog_id] = dialog;
 
-    let dialog = document.createElement("li");
-    dialog.classList.add("dialog");
-    dialog.id = `dialog-id-${dialog_id}`;
-    dialog.addEventListener("click", () => {selectDialog(dialog_id)});
+    let dialog_el = document.createElement("li");
+    dialog_el.classList.add("dialogs__item");
+    dialog_el.id = `dialog-id-${dialog_id}`;
 
     let avatar_img = document.createElement("img");
-    avatar_img.src = avatar_url;
+    avatar_img.classList.add("dialogs__item__avatar");
+    avatar_img.src = avatarUrl(user["id"], user["avatar"]);
     avatar_img.width = 32;
     avatar_img.height = 32;
     ensureImageLoaded(avatar_img, DEFAULT_AVATAR);
 
     let name = document.createElement("span");
-    name.innerText = username;
-    if(new_messages)
+    name.classList.add("dialogs__item__username");
+    name.innerText = user["username"];
+    if(dialog["new_messages"])
         name.style.color = "#ff0000";
 
-    dialog.appendChild(avatar_img);
-    dialog.innerHTML += "\n";
-    dialog.appendChild(name);
+    dialog_el.appendChild(avatar_img);
+    dialog_el.innerHTML += "\n";
+    dialog_el.appendChild(name);
 
-    dialogs.appendChild(dialog);
+    dialog_el.addEventListener("click", () => {selectDialog(dialog_id)});
+
+    dialogs.appendChild(dialog_el);
 }
 
 function clearMessages() {
@@ -151,7 +157,7 @@ async function sendMessage() {
     if(!text)
         return;
 
-    let resp = await fetch(`${window.API_ENDPOINT}/chat/messages`, {
+    let resp = await fetch(`${window.API_ENDPOINT}/chat/dialogs/${dialog_id}/messages`, {
         method: "POST",
         headers: {
             "Authorization": localStorage.getItem("token"),
@@ -191,17 +197,13 @@ async function fetchDialogs() {
     }
 
     for(let dialog of await resp.json()) {
-        addDialog(
-            dialog["id"],
-            dialog["username"],
-            dialog["avatar"] ? avatarUrl(dialog["user_id"], dialog["avatar"]) : DEFAULT_AVATAR,
-            dialog["new_messages"]);
+        addDialog(dialog);
         Object.assign(DIALOGS[dialog["id"]], dialog);
     }
 }
 
 async function fetchMessages(dialog_id) {
-    let resp = await fetch(`${window.API_ENDPOINT}/chat/messages?dialog_id=${dialog_id}`, {
+    let resp = await fetch(`${window.API_ENDPOINT}/chat/dialogs/${dialog_id}/messages`, {
         headers: {
             "Authorization": localStorage.getItem("token")
         }
@@ -272,7 +274,7 @@ async function newDialog() {
         return;
     }
 
-    addDialog(jsonResp["id"], jsonResp["username"], "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNMafj/HwAGFwLkTJBHPQAAAABJRU5ErkJggg==", jsonResp["new_messages"]);
+    addDialog(jsonResp);
 }
 
 if (document.readyState !== 'loading') {
@@ -285,11 +287,7 @@ if (document.readyState !== 'loading') {
 
 function _ws_handle_new_message(data) {
     let dialog = data["dialog"];
-    addDialog(
-        dialog["id"],
-        dialog["username"],
-        data["avatar"] ? avatarUrl(data["user_id"], data["avatar"]) : DEFAULT_AVATAR,
-        dialog["new_messages"]);
+    addDialog(dialog);
 
     let message = data["message"];
     addMessage(dialog["id"], message["id"], message["type"], message["text"], message["time"]);

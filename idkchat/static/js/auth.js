@@ -1,4 +1,5 @@
 const auth_title = document.getElementById("auth-form-title");
+const auth_title2 = document.getElementById("auth-form-title2");
 const login_input = document.getElementById("login");
 const password_input = document.getElementById("password");
 const password2_input = document.getElementById("password2");
@@ -9,6 +10,7 @@ const btn_register = document.getElementById("btn_register");
 function toggleMode() {
     let login = auth_title.innerText.trim() === "Login";
     auth_title.innerText = login ? "Register" : "Login";
+    auth_title2.innerText = login ? "or Login (click here)" : "or Register (click here)";
     password2_div.style.display = login ? "" : "none";
     btn_register.style.display = login ? "" : "none";
     btn_login.style.display = login ? "none" : "";

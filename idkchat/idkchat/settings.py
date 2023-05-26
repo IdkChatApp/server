@@ -34,6 +34,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
+    "rest_framework",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -42,7 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "front",
     "api",
-    "rest_framework",
+    "ws",
 ]
 
 MIDDLEWARE = [
@@ -74,6 +76,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "idkchat.wsgi.application"
+ASGI_APPLICATION = "idkchat.asgi.application"
 
 
 # Database
@@ -140,4 +143,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'api.authentication.IdkIsAuthenticated',
     ]
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
 }

@@ -15,12 +15,12 @@
 </head>
 <body class="theme-dark">
     <main class="content content-dialogs grid-container" style="height: 90vh;">
-        <div class="dialog-add">
-            <button onclick="newDialog();">Add</button>
-        </div>
-
         <div class="dialogs-list">
             <ul class="dialogs" id="dialogs"></ul>
+        </div>
+
+        <div class="dialog-add">
+            <button class="dialog-add__button" onclick="newDialog();">Add</button>
         </div>
 
         <div class="dialog-title" id="dialog-title">
@@ -32,11 +32,11 @@
         </div>
 
         <div class="dialog-input">
-            <input type="text" name="message" placeholder="Text..." id="message-input">
+            <input type="text" name="message" placeholder="Text..." id="message-input" class="dialog-input__input">
         </div>
 
         <div class="dialog-send-button">
-            <button onclick="sendMessage();">Send</button>
+            <button onclick="sendMessage();" class="dialog-send-button__button">Send</button>
         </div>
     </main>
 

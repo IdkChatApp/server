@@ -83,8 +83,8 @@ class MessageSerializer(serializers.ModelSerializer):
         return 1 if obj.author != current_user else 0
 
     class Meta:
-        model = Dialog
-        fields = ("id", "text", "time", "type",)
+        model = Message
+        fields = ("id", "text", "created_at", "type",)
 
 
 class MessageCreateSerializer(serializers.Serializer):

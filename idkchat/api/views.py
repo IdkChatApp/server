@@ -2,6 +2,8 @@ from hashlib import sha256
 from time import time
 from typing import Optional
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.db.models import Q
 from rest_framework import permissions, status
@@ -131,7 +133,7 @@ class DialogsView(APIView):
 class MessagesView(APIView):
     def get(self, request: Request, dialog_id: int, format=None) -> Response:
         user = request.user
-        dialog: Optional[Dialog] = Dialog.objects.filter((Q(user_1__id=user.id) | Q(user_2__id=user.id)) & Q(id=dialog_id))
+        dialog: Optional[Dialog] = Dialog.objects.filter((Q(user_1__id=user.id) | Q(user_2__id=user.id)) & Q(id=dialog_id)).first()
         if dialog is None:
             return Response(
                 {"dialog": ["This dialog does not exist."]},
@@ -144,7 +146,7 @@ class MessagesView(APIView):
 
     def post(self, request: Request, dialog_id: int, format=None) -> Response:
         user = request.user
-        dialog: Optional[Dialog] = Dialog.objects.filter((Q(user_1__id=user.id) | Q(user_2__id=user.id)) & Q(id=dialog_id))
+        dialog: Optional[Dialog] = Dialog.objects.filter((Q(user_1__id=user.id) | Q(user_2__id=user.id)) & Q(id=dialog_id)).first()
         if dialog is None:
             return Response(
                 {"dialog": ["This dialog does not exist."]},
@@ -156,4 +158,11 @@ class MessagesView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         message = Message.objects.create(dialog=dialog, author=request.user, text=serializer.data["text"])
-        return Response(MessageSerializer(message, context={"current_user": request.user}).data)
+        message_json = MessageSerializer(message, context={"current_user": request.user}).data
+
+        async_to_sync(get_channel_layer().group_send)(f"user_{user.id}", {"type": "chat_event", "data": {
+            "message": message_json,
+            "dialog": DialogSerializer(dialog, context={"current_user": request.user}).data,
+        }})
+
+        return Response(message_json)

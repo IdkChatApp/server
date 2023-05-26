@@ -1,9 +1,10 @@
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 
 def index_page(request: HttpRequest) -> HttpResponse:
-    return render(request, "index.html")
+    #return render(request, "index.html")
+    return redirect("/auth")
 
 def auth_page(request: HttpRequest) -> HttpResponse:
     return render(request, "auth.html")
