@@ -4,7 +4,7 @@ from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
-from .models import User, Dialog, Message
+from .models import User, Dialog, Message, ReadState
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -49,7 +49,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ("id", "login", "username", "pubKey", "avatar",)
 
 
-class DialogSerializer(serializers.ModelSerializer):
+class DialogSerializer(serializers.ModelSerializer): # TODO: Add `recipients` field instead of sending other user in `user` field
     user = serializers.SerializerMethodField("_other_user")
     new_messages = serializers.SerializerMethodField("_new_messages")
 
@@ -60,7 +60,16 @@ class DialogSerializer(serializers.ModelSerializer):
         return UserSerializer(obj.other_user(current_user)).data
 
     def _new_messages(self, obj: Dialog) -> bool:
-        return True # TODO: check for unread messages
+        current_user: Optional[User] = self.context.get("current_user")
+        if not current_user:
+            return True
+        read_state = self.context.get("read_state") or \
+                     ReadState.objects.filter(dialog__id=self.instance.id, user__id=current_user.id).first()
+        if not read_state:
+            return True
+        last_message = self.context.get("last_message") or \
+                       Message.objects.filter(dialog__id=self.instance.id).order_by("-id").first()
+        return last_message.id > read_state.message_id
 
     class Meta:
         model = Dialog
@@ -75,16 +84,9 @@ class DialogCreateSerializer(serializers.Serializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    type = serializers.SerializerMethodField("_message_type")
-
-    def _message_type(self, obj: Message) -> int:
-        current_user: Optional[User] = self.context.get("current_user")
-        if not current_user: return 1
-        return 1 if obj.author != current_user else 0
-
     class Meta:
         model = Message
-        fields = ("id", "text", "created_at", "type",)
+        fields = ("id", "text", "created_at", "author",)
 
 
 class MessageCreateSerializer(serializers.Serializer):

@@ -1,0 +1,5 @@
+class WS_OP:
+    IDENTIFY = 0
+    CREATE_MESSAGE = 1
+    MARK_AS_READ = 2
+    DIALOG_UPDATE = 3

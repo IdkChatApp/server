@@ -4,9 +4,12 @@ from typing import Optional
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
+from django.db.models import Q
 
-from api.models import User, Session
+from api.models import User, Session, Dialog, Message, ReadState
+from api.serializers import DialogSerializer
 from api.utils import JWT
+from ws.utils import WS_OP
 
 
 class IdkConsumer(AsyncJsonWebsocketConsumer):
@@ -31,11 +34,28 @@ class IdkConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_add(f"user_{self.user.id}", self.channel_name)
 
     async def handle_2(self, data: dict) -> None:
-        ...
+        if "dialog_id" not in data: return await self.close(4000)
+        dialog = await Dialog.objects.aget(Q(id=data["dialog_id"]) & (Q(user_1__id=self.user.id) | Q(user_2__id=self.user.id)))
+        last_message = await Message.objects.filter(dialog__id=dialog.id).order_by("-id").afirst()
+        read_state: ReadState = await ReadState.objects.filter(user__id=self.user.id, dialog__id=dialog.id).afirst()
+        if read_state is None:
+            read_state: ReadState = await ReadState.objects.acreate(user=self.user, dialog=dialog, message_id=last_message.id)
+        read_state.message_id = last_message.id
+        await read_state.asave()
+
+        await sync_to_async(lambda: dialog.user_1)()
+        await sync_to_async(lambda: dialog.user_2)()
+
+        await self.send_json({
+            "op": WS_OP.DIALOG_UPDATE,
+            "d": DialogSerializer(dialog, context={"current_user": self.user, "read_state": read_state,
+                                                   "last_message": last_message}).data
+        })
 
     async def disconnect(self, code):
         self.closed = True
-        await self.channel_layer.group_discard(f"user_{self.user.id}", self.channel_name)
+        if self.user is not None:
+            await self.channel_layer.group_discard(f"user_{self.user.id}", self.channel_name)
 
     async def receive_json(self, content: dict):
         if "op" not in content or not isinstance(content["op"], int) \
@@ -52,9 +72,9 @@ class IdkConsumer(AsyncJsonWebsocketConsumer):
 
         try:
             await handle_func(content["d"])
-        except:
+        except KeyError:
             return await self.close(4005)
         if self.closed: return
 
     async def chat_event(self, event):
-        await self.send_json(event["data"])
+        await self.send_json({"op": event["op"], "d": event["data"]})

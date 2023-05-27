@@ -13,7 +13,8 @@ from rest_framework.views import APIView
 from simplesrp.ng_values import NG
 from simplesrp.server.srp import Verifier
 
-from .models import User, Session, PendingAuth, Dialog, Message
+from ws.utils import WS_OP
+from .models import User, Session, PendingAuth, Dialog, Message, ReadState
 from .serializers import RegisterSerializer, LoginStartSerializer, LoginSerializer, DialogSerializer, MessageSerializer, \
     MessageCreateSerializer, DialogCreateSerializer
 from .utils import JWT
@@ -33,10 +34,10 @@ class LoginStartView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        srp = Verifier(user.login, bytes.fromhex(user.salt), int("0x"+user.verifier, 16), sha256, NG.NG_2048)
+        srp = Verifier(user.login, bytes.fromhex(user.salt), int("0x" + user.verifier, 16), sha256, NG.NG_2048)
         salt, B = srp.getChallenge()
 
-        pauth = PendingAuth.objects.create(user=user, pubB=hex(B), privB=hex(srp.b), expire_timestamp=int(time()+10))
+        pauth = PendingAuth.objects.create(user=user, pubB=hex(B), privB=hex(srp.b), expire_timestamp=int(time() + 10))
         secret = getattr(settings, "JWT_KEY")
         ticket = JWT.encode({
             "user_id": user.id,
@@ -77,7 +78,8 @@ class LoginView(APIView):
         srp.B = int(pauth.pubB, 16)
         pauth.delete()
 
-        if not (HAMK := srp.verifyChallenge(int("0x" + serializer.data["A"], 16), int("0x" + serializer.data["M"], 16))):
+        if not (
+        HAMK := srp.verifyChallenge(int("0x" + serializer.data["A"], 16), int("0x" + serializer.data["M"], 16))):
             return Response(
                 {"non_field_errors": ["Invalid login or password."]},
                 status=status.HTTP_400_BAD_REQUEST
@@ -116,9 +118,9 @@ class DialogsView(APIView):
         return Response(dialogs_json)
 
     def post(self, request: Request, format=None) -> Response:
+        user = request.user
         serializer = DialogCreateSerializer(data=request.data)
         if not serializer.is_valid():
-
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         if (other_user := User.objects.filter(login=serializer.data["username"]).first()) is None:
             return Response(
@@ -126,14 +128,17 @@ class DialogsView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        dialog = Dialog.objects.create(user_1=request.user, user_2=other_user)
-        return Response(DialogSerializer(dialog, context={"current_user": request.user}).data)
+        q = (Q(user_1__id=user.id) & Q(user_2__id=other_user.id)) | (Q(user_1__id=other_user.id) & Q(user_2__id=user.id))
+        dialog = Dialog.objects.filter(q).first() or \
+                 Dialog.objects.create(user_1=user, user_2=other_user)
+        return Response(DialogSerializer(dialog, context={"current_user": user}).data)
 
 
 class MessagesView(APIView):
     def get(self, request: Request, dialog_id: int, format=None) -> Response:
         user = request.user
-        dialog: Optional[Dialog] = Dialog.objects.filter((Q(user_1__id=user.id) | Q(user_2__id=user.id)) & Q(id=dialog_id)).first()
+        dialog: Optional[Dialog] = Dialog.objects.filter(
+            (Q(user_1__id=user.id) | Q(user_2__id=user.id)) & Q(id=dialog_id)).first()
         if dialog is None:
             return Response(
                 {"dialog": ["This dialog does not exist."]},
@@ -146,7 +151,8 @@ class MessagesView(APIView):
 
     def post(self, request: Request, dialog_id: int, format=None) -> Response:
         user = request.user
-        dialog: Optional[Dialog] = Dialog.objects.filter((Q(user_1__id=user.id) | Q(user_2__id=user.id)) & Q(id=dialog_id)).first()
+        dialog: Optional[Dialog] = Dialog.objects.filter(
+            (Q(user_1__id=user.id) | Q(user_2__id=user.id)) & Q(id=dialog_id)).first()
         if dialog is None:
             return Response(
                 {"dialog": ["This dialog does not exist."]},
@@ -158,11 +164,23 @@ class MessagesView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         message = Message.objects.create(dialog=dialog, author=request.user, text=serializer.data["text"])
-        message_json = MessageSerializer(message, context={"current_user": request.user}).data
 
-        async_to_sync(get_channel_layer().group_send)(f"user_{user.id}", {"type": "chat_event", "data": {
-            "message": message_json,
-            "dialog": DialogSerializer(dialog, context={"current_user": request.user}).data,
-        }})
+        read_state: ReadState = ReadState.objects.filter(user__id=user.id, dialog__id=dialog.id).first() or \
+                                ReadState.objects.create(user=user, dialog=dialog, message_id=message.id)
+        read_state.message_id = message.id
+        read_state.save()
 
-        return Response(message_json)
+        for u in (dialog.user_1, dialog.user_2):
+            async_to_sync(get_channel_layer().group_send)(
+                f"user_{u.id}",
+                {
+                    "type": "chat_event",
+                    "op": WS_OP.CREATE_MESSAGE,
+                    "data": {
+                        "message": MessageSerializer(message, context={"current_user": u}).data,
+                        "dialog": DialogSerializer(dialog, context={"current_user": u}).data,
+                    }
+                }
+            )
+
+        return Response(MessageSerializer(message, context={"current_user": request.user}).data)

@@ -3,6 +3,15 @@ const dialog_title = document.getElementById("dialog-title");
 const messages = document.getElementById("messages");
 const message_input = document.getElementById("message-input");
 
+
+t = localStorage.getItem("token");
+if(!t || !t.split(".")[1]) location.href = "/auth";
+t = atob(t.split(".")[1]);
+t = JSON.parse(t);
+if(!t["user_id"]) location.href = "/auth";
+window.USER_ID = t["user_id"];
+delete t;
+
 window.DIALOGS = {};
 window.MESSAGES = [];
 window.MESSAGES_CACHE = {};
@@ -26,12 +35,10 @@ function updateDialog(dialog_id) {
     }
     if(!username || !avatar) return;
 
-    username.innerText = dialog_obj["username"];
+    username.innerText = dialog_obj["user"]["username"];
     username.style.color = dialog_obj["new_messages"] ? "#ff0000" : "";
 
-    console.log(dialog_obj)
-
-    avatar.src = dialog_obj["avatar"] ? avatarUrl(dialog_obj["user_id"], dialog_obj["avatar"]) : DEFAULT_AVATAR;
+    avatar.src = avatarUrl(dialog_obj["user"]["id"], dialog_obj["avatar"]);
     ensureImageLoaded(avatar, DEFAULT_AVATAR);
 }
 
@@ -61,8 +68,7 @@ function addDialog(dialog) {
         MESSAGES_CACHE[dialog_id] = {"messages": [], "message_ids": []};
     }
     if(dialog_id in DIALOGS) {
-        DIALOGS[dialog_id]["username"] = username;
-        DIALOGS[dialog_id]["new_messages"] = new_messages;
+        Object.assign(DIALOGS[dialog["id"]], dialog);
         updateDialog(dialog_id);
         return;
     }
@@ -71,6 +77,7 @@ function addDialog(dialog) {
     let dialog_el = document.createElement("li");
     dialog_el.classList.add("dialogs__item");
     dialog_el.id = `dialog-id-${dialog_id}`;
+    dialog_el.addEventListener("click", () => {selectDialog(dialog_id)});
 
     let avatar_img = document.createElement("img");
     avatar_img.classList.add("dialogs__item__avatar");
@@ -89,8 +96,6 @@ function addDialog(dialog) {
     dialog_el.innerHTML += "\n";
     dialog_el.appendChild(name);
 
-    dialog_el.addEventListener("click", () => {selectDialog(dialog_id)});
-
     dialogs.appendChild(dialog_el);
 }
 
@@ -98,10 +103,11 @@ function clearMessages() {
     messages.innerHTML = "";
 }
 
-function addMessage(dialog_id, message_id, type, text, time) {
+function addMessage(dialog_id, message) {
+    let message_id = message["id"];
     if(!MESSAGES_CACHE[dialog_id]["message_ids"].includes(message_id)) {
         MESSAGES_CACHE[dialog_id]["message_ids"].push(message_id);
-        MESSAGES_CACHE[dialog_id]["messages"].push({"id": message_id, "type": type, "text": text, "time": time});
+        MESSAGES_CACHE[dialog_id]["messages"].push(message);
     }
     if(getSelectedDialog() !== dialog_id)
         return;
@@ -111,29 +117,29 @@ function addMessage(dialog_id, message_id, type, text, time) {
     let idx = sortedIndex(MESSAGES, message_id);
     MESSAGES.splice(idx, 0, message_id);
 
-    let message = document.createElement("li");
-    message.id = `message-id-${message_id}`;
-    message.classList.add(type === 0 ? "my-message" : "message");
+    let message_el = document.createElement("li");
+    message_el.id = `message-id-${message_id}`;
+    message_el.classList.add(message["author"] === USER_ID ? "my-message" : "message");
 
-    let date = new Date(time);
+    let date = new Date(message["created_at"]*1000);
     let timestamp = document.createElement("span");
     timestamp.classList.add("message-time");
     timestamp.innerText = `[${padDate(date.getDate())}.${padDate(date.getMonth())}.${date.getFullYear()} ${padDate(date.getHours())}:${padDate(date.getMinutes())}]`;
 
     let message_text = document.createElement("span");
-    message_text.innerText = text;
+    message_text.innerText = message["text"];
 
-    message.appendChild(type === 0 ? message_text : timestamp);
-    message.innerHTML += "\n";
-    message.appendChild(type === 0 ? timestamp : message_text);
+    message_el.appendChild(message["author"] === USER_ID ? message_text : timestamp);
+    message_el.innerHTML += "\n";
+    message_el.appendChild(message["author"] === USER_ID ? timestamp : message_text);
 
     let insertLast = idx === MESSAGES.length-1;
     let before = MESSAGES[idx+1];
     before = document.getElementById(`message-id-${before}`);
     if(insertLast || !before)
-        messages.appendChild(message);
+        messages.appendChild(message_el);
     else {
-        messages.insertBefore(message, before);
+        messages.insertBefore(message_el, before);
     }
 
     if(insertLast)
@@ -157,13 +163,13 @@ async function sendMessage() {
     if(!text)
         return;
 
-    let resp = await fetch(`${window.API_ENDPOINT}/chat/dialogs/${dialog_id}/messages`, {
+    let resp = await fetch(`${window.API_ENDPOINT}/chat/dialogs/${getSelectedDialog()}/messages`, {
         method: "POST",
         headers: {
             "Authorization": localStorage.getItem("token"),
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({"dialog_id": getSelectedDialog(), "text": text})
+        body: JSON.stringify({"text": text})
     });
     if(resp.status === 401) {
         localStorage.removeItem("token");
@@ -214,7 +220,7 @@ async function fetchMessages(dialog_id) {
     }
 
     for(let message of await resp.json()) {
-        addMessage(dialog_id, message["id"], message["type"], message["text"], message["time"]);
+        addMessage(dialog_id, message);
     }
 }
 
@@ -229,13 +235,13 @@ function selectDialog(dialog_id) {
     }
 
     dialog_to_sel.classList.add("dialog-selected");
-    dialog_title.innerText = DIALOGS[dialog_id].username;
+    dialog_title.innerText = DIALOGS[dialog_id]["user"]["username"];
     window.MESSAGES = [];
     clearMessages();
 
     window.CURRENT_DIALOG = dialog_id;
     for(let message of MESSAGES_CACHE[dialog_id]["messages"]) {
-        addMessage(dialog_id, message["id"], message["type"], message["text"], message["time"]);
+        addMessage(dialog_id, message);
     }
     fetchMessages(dialog_id).then();
 
@@ -275,14 +281,7 @@ async function newDialog() {
     }
 
     addDialog(jsonResp);
-}
-
-if (document.readyState !== 'loading') {
-    fetchDialogs().then();
-} else {
-    window.addEventListener("DOMContentLoaded", async () => {
-        await fetchDialogs();
-    }, false);
+    selectDialog(jsonResp["id"]);
 }
 
 function _ws_handle_new_message(data) {
@@ -290,17 +289,16 @@ function _ws_handle_new_message(data) {
     addDialog(dialog);
 
     let message = data["message"];
-    addMessage(dialog["id"], message["id"], message["type"], message["text"], message["time"]);
+    addMessage(dialog["id"], message);
 
-    if(message["type"] !== 0) {
-        if(getSelectedDialog() === dialog["id"])
-            window._WS.send(JSON.stringify({
-                "op": 2,
-                "d": {
-                    "dialog_id": dialog["id"],
-                    "message_id": message["id"]
-                }
-            }));
+    if(message["author"] !== USER_ID && getSelectedDialog() === dialog["id"]) {
+        window._WS.send(JSON.stringify({
+            "op": 2,
+            "d": {
+                "dialog_id": dialog["id"],
+                "message_id": message["id"]
+            }
+        }));
     }
 }
 
@@ -349,8 +347,10 @@ function initWs() {
 
 if (document.readyState !== 'loading') {
     initWs();
+    fetchDialogs().then();
 } else {
-    window.addEventListener("DOMContentLoaded", () => {
+    window.addEventListener("DOMContentLoaded",  async () => {
         initWs();
+        await fetchDialogs();
     }, false);
 }

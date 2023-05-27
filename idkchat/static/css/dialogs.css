@@ -20,15 +20,10 @@
     width: 100%;
     padding: 0;
     float: left;
-}
-
-.dialogs__item {
     padding-top: 10px !important;
     padding-bottom: 10px !important;
     padding-left: 10px !important;
     right: 10px;
-    float: left;
-    width: 100%;
 }
 
 .dialogs__item__avatar {
@@ -145,7 +140,7 @@
 
 .messages-list {
     grid-row-start: 2;
-    grid-column-start: 1;
+    grid-column-start: 4;
 
     grid-row-end: 15;
     grid-column-end: 16;
