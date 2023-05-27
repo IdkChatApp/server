@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
+import json
 import os.path
 from os import environ
 from pathlib import Path
@@ -16,13 +17,18 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+json_settings = {}
+if (BASE_DIR.parent / "settings.json").exists():
+    with open(BASE_DIR.parent / "settings.json", encoding="utf8") as f:
+        try: json_settings = json.load(f)
+        except: pass
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = environ.get("SECRET_KEY") or "django-insecure-#-!k733m0#t5xx%j#cu%8yp@j6+k61a_k-4s+x0d1j-!-jlye0"
-JWT_KEY = environ.get("JWT_KEY") or SECRET_KEY
+SECRET_KEY = environ.get("SECRET_KEY") or json_settings.get("SECRET_KEY", "django-insecure-#-!k733m0#t5xx%j#cu%8yp@j6+k61a_k-4s+x0d1j-!-jlye0")
+JWT_KEY = environ.get("JWT_KEY") or json_settings.get("JWT_KEY", SECRET_KEY)
 assert JWT_KEY is not None
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -82,7 +88,7 @@ ASGI_APPLICATION = "idkchat.asgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
+DATABASES = json_settings.get("DATABASES") or {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
