@@ -18,7 +18,8 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 json_settings = {}
-if (BASE_DIR.parent / "settings.json").exists():
+json_settings_path = Path(environ.get("JSON_SETTINGS", None) or BASE_DIR.parent / "settings.json")
+if json_settings_path.exists():
     with open(BASE_DIR.parent / "settings.json", encoding="utf8") as f:
         try: json_settings = json.load(f)
         except: pass
@@ -32,7 +33,7 @@ JWT_KEY = environ.get("JWT_KEY") or json_settings.get("JWT_KEY", SECRET_KEY)
 assert JWT_KEY is not None
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = json_settings.get("DEBUG", True)
 
 ALLOWED_HOSTS = []
 
@@ -88,12 +89,14 @@ ASGI_APPLICATION = "idkchat.asgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = json_settings.get("DATABASES") or {
+DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+DATABASES.update(json_settings.get("DATABASES", {}))
 
 
 # Password validation
@@ -155,7 +158,13 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [(environ.get("REDIS_HOST", "127.0.0.1"), int(environ.get("REDIS_PORT", 6379)))],
         },
     }
 }
+CHANNEL_LAYERS.update(json_settings.get("CHANNEL_LAYERS", {}))
+
+S3_BUCKET = json_settings.get("S3_BUCKET", None) or environ.get("S3_BUCKET")
+S3_ENDPOINT = json_settings.get("S3_ENDPOINT", None) or environ.get("S3_ENDPOINT")
+S3_ID = json_settings.get("S3_ID", None) or environ.get("S3_ID")
+S3_KEY = json_settings.get("S3_KEY", None) or environ.get("S3_KEY")

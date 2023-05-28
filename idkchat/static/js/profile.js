@@ -49,7 +49,7 @@ async function uploadAvatar(avatar_b64) {
     }
 
     let profileData = await resp.json();
-    avatar_img.src = profileData["avatar"] ? avatarUrl(profileData["id"], profileData["avatar"]) : DEFAULT_AVATAR;
+    avatar_img.src = avatarUrl(profileData["id"], profileData["avatar"]);
 }
 
 async function fetchProfileData() {
@@ -64,7 +64,7 @@ async function fetchProfileData() {
     }
 
     let profileData = await resp.json();
-    avatar_img.src = profileData["avatar"] ? avatarUrl(profileData["id"], profileData["avatar"]) : DEFAULT_AVATAR;
+    avatar_img.src = avatarUrl(profileData["id"], profileData["avatar"]);
     username_span.innerText = profileData["username"];
 }
 

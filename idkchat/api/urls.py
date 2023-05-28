@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import LoginView, LoginStartView, RegisterView, LogoutView, DialogsView, MessagesView
+from .views import LoginView, LoginStartView, RegisterView, LogoutView, DialogsView, MessagesView, UsersMeView
 
 urlpatterns = [
     path("auth/login-start", LoginStartView.as_view()),
@@ -10,4 +10,6 @@ urlpatterns = [
 
     path("chat/dialogs", DialogsView.as_view()),
     path("chat/dialogs/<int:dialog_id>/messages", MessagesView.as_view()),
+
+    path("users/@me", UsersMeView.as_view())
 ]

@@ -16,8 +16,9 @@ from simplesrp.server.srp import Verifier
 from ws.utils import WS_OP
 from .models import User, Session, PendingAuth, Dialog, Message, ReadState
 from .serializers import RegisterSerializer, LoginStartSerializer, LoginSerializer, DialogSerializer, MessageSerializer, \
-    MessageCreateSerializer, DialogCreateSerializer
-from .utils import JWT
+    MessageCreateSerializer, DialogCreateSerializer, UserSerializer
+from .storage import S3Storage
+from .utils import JWT, getImage
 
 
 class LoginStartView(APIView):
@@ -184,3 +185,23 @@ class MessagesView(APIView):
             )
 
         return Response(MessageSerializer(message, context={"current_user": request.user}).data)
+
+
+class UsersMeView(APIView):
+    def get(self, request: Request, format=None) -> Response:
+        return Response(UserSerializer(request.user).data)
+
+    def patch(self, request: Request, format=None) -> Response:
+        user = request.user
+        if request.data["avatar"] or request.data["avatar"] is None:
+            avatar = request.data["avatar"]
+            if avatar is not None:
+                image = getImage(avatar)
+                avatar = user.avatar
+                if (avatar_hash := S3Storage.setAvatar(user.id, image, 512)) is not None:
+                    avatar = avatar_hash
+
+            user.avatar = avatar
+            user.save()
+
+        return Response(UserSerializer(user).data)

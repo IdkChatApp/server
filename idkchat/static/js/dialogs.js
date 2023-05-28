@@ -38,7 +38,7 @@ function updateDialog(dialog_id) {
     username.innerText = dialog_obj["user"]["username"];
     username.style.color = dialog_obj["new_messages"] ? "#ff0000" : "";
 
-    avatar.src = avatarUrl(dialog_obj["user"]["id"], dialog_obj["avatar"]);
+    avatar.src = avatarUrl(dialog_obj["user"]["id"], dialog_obj["user"]["avatar"]);
     ensureImageLoaded(avatar, DEFAULT_AVATAR);
 }
 
