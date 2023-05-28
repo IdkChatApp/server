@@ -51,6 +51,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class DialogSerializer(serializers.ModelSerializer): # TODO: Add `recipients` field instead of sending other user in `user` field
     user = serializers.SerializerMethodField("_other_user")
+    key = serializers.SerializerMethodField("_key")
     new_messages = serializers.SerializerMethodField("_new_messages")
 
     def _other_user(self, obj: Dialog) -> Optional[dict]:
@@ -67,13 +68,22 @@ class DialogSerializer(serializers.ModelSerializer): # TODO: Add `recipients` fi
                      ReadState.objects.filter(dialog__id=self.instance.id, user__id=current_user.id).first()
         if not read_state:
             return True
-        last_message = self.context.get("last_message") or \
-                       Message.objects.filter(dialog__id=self.instance.id).order_by("-id").first()
-        return last_message.id > read_state.message_id
+        last_message_id = self.context.get("last_message_id")
+        if last_message_id is None:
+            last_message_id = 0
+            last_message = Message.objects.filter(dialog__id=self.instance.id).order_by("-id").first()
+            if last_message is not None:
+                last_message_id = last_message.id
+        return last_message_id > read_state.message_id
+
+    def _key(self, obj: Dialog) -> Optional[str]:
+        current_user: Optional[User] = self.context.get("current_user")
+        if not current_user: return
+        return obj.key_1 if obj.user_1 == current_user else obj.key_2
 
     class Meta:
         model = Dialog
-        fields = ("id", "user", "new_messages",)
+        fields = ("id", "user", "key", "new_messages",)
 
 
 class DialogCreateSerializer(serializers.Serializer):
@@ -81,13 +91,21 @@ class DialogCreateSerializer(serializers.Serializer):
         RegexValidator(r'^[a-z0-9_]*$',
                        'the field must contain only lowercase letters, numbers or underscore'),
     ])
+    keys = serializers.DictField()
 
 
 class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
-        fields = ("id", "text", "created_at", "author",)
+        fields = ("id", "content", "created_at", "author",)
 
 
 class MessageCreateSerializer(serializers.Serializer):
-    text: str = serializers.CharField(label="Message text", required=True, min_length=1, max_length=1024)
+    content: str = serializers.CharField(label="Message content", required=True, min_length=1, max_length=4096)
+
+
+class GetUserByNameSerializer(serializers.Serializer):
+    username: str = serializers.CharField(label="Login", required=True, min_length=5, max_length=32, validators=[
+        RegexValidator(r'^[a-z0-9_]*$',
+                       'the field must contain only lowercase letters, numbers or underscore'),
+    ])

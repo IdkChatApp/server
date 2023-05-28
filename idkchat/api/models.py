@@ -59,6 +59,7 @@ class Session(BaseModel):
             "user_id": self.user.id,
             "session_id": self.id,
             "session_key": self.session_key,
+            "pubKey": self.user.pubKey,
         }, secret, self.expire_timestamp)
 
 
@@ -77,6 +78,8 @@ class Dialog(BaseModel):
     id: int = models.BigAutoField(primary_key=True)
     user_1: User = models.ForeignKey(User, related_name="user_1", on_delete=models.CASCADE)
     user_2: User = models.ForeignKey(User, related_name="user_2", on_delete=models.CASCADE)
+    key_1: str = models.TextField(max_length=512)
+    key_2: str = models.TextField(max_length=512)
 
     def other_user(self, current_user: User) -> User:
         return self.user_1 if self.user_2 == current_user else self.user_2
@@ -96,7 +99,7 @@ class Message(BaseModel):
     dialog: Dialog = models.ForeignKey(Dialog, on_delete=models.CASCADE)
     author: User = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at: int = models.BigIntegerField(default=time_int)
-    text: str = models.TextField(max_length=4096)
+    content: str = models.TextField(max_length=4096)
 
     def __repr__(self) -> str:
         return f"Message(id={self.id!r}, dialog.id={self.dialog.id!r}, author.id={self.author.id!r})"

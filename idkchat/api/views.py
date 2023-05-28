@@ -16,7 +16,7 @@ from simplesrp.server.srp import Verifier
 from ws.utils import WS_OP
 from .models import User, Session, PendingAuth, Dialog, Message, ReadState
 from .serializers import RegisterSerializer, LoginStartSerializer, LoginSerializer, DialogSerializer, MessageSerializer, \
-    MessageCreateSerializer, DialogCreateSerializer, UserSerializer
+    MessageCreateSerializer, DialogCreateSerializer, UserSerializer, GetUserByNameSerializer
 from .storage import S3Storage
 from .utils import JWT, getImage
 
@@ -129,9 +129,22 @@ class DialogsView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        keys: dict = serializer.data["keys"]
+        this_key, other_key = None, None
+        if str(user.id) in keys:
+            this_key = keys[str(user.id)]
+        if str(other_user.id) in keys:
+            other_key = keys[str(other_user.id)]
+
+        if not this_key or not other_key:
+            return Response(
+                {"keys": ["Invalid keys"]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         q = (Q(user_1__id=user.id) & Q(user_2__id=other_user.id)) | (Q(user_1__id=other_user.id) & Q(user_2__id=user.id))
         dialog = Dialog.objects.filter(q).first() or \
-                 Dialog.objects.create(user_1=user, user_2=other_user)
+                 Dialog.objects.create(user_1=user, user_2=other_user, key_1=this_key, key_2=other_key)
         return Response(DialogSerializer(dialog, context={"current_user": user}).data)
 
 
@@ -164,7 +177,7 @@ class MessagesView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        message = Message.objects.create(dialog=dialog, author=request.user, text=serializer.data["text"])
+        message = Message.objects.create(dialog=dialog, author=request.user, content=serializer.data["content"])
 
         read_state: ReadState = ReadState.objects.filter(user__id=user.id, dialog__id=dialog.id).first() or \
                                 ReadState.objects.create(user=user, dialog=dialog, message_id=message.id)
@@ -205,3 +218,17 @@ class UsersMeView(APIView):
             user.save()
 
         return Response(UserSerializer(user).data)
+
+
+class GetUserByName(APIView):
+    def post(self, request: Request, format=None) -> Response:
+        serializer = GetUserByNameSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if (other_user := User.objects.filter(login=serializer.data["username"]).first()) is None:
+            return Response(
+                {"login": ["User with login does not exist."]},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        return Response(UserSerializer(other_user).data)

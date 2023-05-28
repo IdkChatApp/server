@@ -38,9 +38,10 @@ class IdkConsumer(AsyncJsonWebsocketConsumer):
         dialog = await Dialog.objects.aget(Q(id=data["dialog_id"]) & (Q(user_1__id=self.user.id) | Q(user_2__id=self.user.id)))
         last_message = await Message.objects.filter(dialog__id=dialog.id).order_by("-id").afirst()
         read_state: ReadState = await ReadState.objects.filter(user__id=self.user.id, dialog__id=dialog.id).afirst()
+        last_message_id = last_message.id if last_message else 0
         if read_state is None:
-            read_state: ReadState = await ReadState.objects.acreate(user=self.user, dialog=dialog, message_id=last_message.id)
-        read_state.message_id = last_message.id
+            read_state: ReadState = await ReadState.objects.acreate(user=self.user, dialog=dialog, message_id=last_message_id)
+        read_state.message_id = last_message_id
         await read_state.asave()
 
         await sync_to_async(lambda: dialog.user_1)()
@@ -49,7 +50,7 @@ class IdkConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json({
             "op": WS_OP.DIALOG_UPDATE,
             "d": DialogSerializer(dialog, context={"current_user": self.user, "read_state": read_state,
-                                                   "last_message": last_message}).data
+                                                   "last_message_id": last_message_id}).data
         })
 
     async def disconnect(self, code):
