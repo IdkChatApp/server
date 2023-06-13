@@ -38,10 +38,13 @@ class User(BaseModel):
     verifier: str = models.TextField(max_length=4096)
     privKey: str = models.TextField(max_length=4096)
     pubKey: str = models.TextField(max_length=2048)
-    avatar: str = models.TextField(max_length=4096, null=True)
+    avatar: str = models.ImageField(null=True, upload_to="avatars")
 
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, login={self.login!r})"
+
+    def is_authenticated(self) -> bool:
+        return True
 
 
 class Session(BaseModel):

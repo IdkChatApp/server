@@ -1,0 +1,131 @@
+{% load dialogs_filters %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="IdkChat - simple and minimalistic chat app.">
+    <meta name="keywords" content="idkchat,chat,simple,minimalistic,real-time">
+    <meta name="author" content="RuslanUC">
+    <title>IdkChat - Dialogs</title>
+    <style>
+      .text-bg-title {
+        color: #fff!important;
+        background-color: RGBA(43, 47, 51, var(--bs-bg-opacity, 1));
+        !important
+      }
+
+      .message-time {
+        font-size: x-small;
+        margin-left: 3px;
+        margin-right: 3px;
+      }
+
+      .message-text {
+        margin-left: 3px;
+        margin-right: 3px;
+      }
+
+      .message {
+        width: 100%;
+        color: #719eff;
+        float: left;
+        text-align: left;
+      }
+      .message > div { width: auto; float: left; }
+      .message > div > .message-time { float: left; }
+      .message > div > .message-text { float: right; }
+
+      .my-message {
+        color: #C623FF;
+        float: right;
+        text-align: right;
+      }
+      .my-message > div { width: auto; float: right; }
+      .my-message > div > .message-time { float: right; }
+      .my-message > div > .message-text { float: left; }
+
+      .choose-dialog-label {
+        border: 1px solid white;
+        border-radius: 20px;
+        padding: 7px;
+        user-select: none;
+      }
+    </style>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/OpenCrypto.min.js"></script>
+</head>
+<body class="vh-100">
+<div class="container-fluid h-100">
+  <div class="row flex-nowrap h-100">
+    <div class="d-flex flex-column p-3 text-bg-dark col-3 h-100">
+      <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+        <span class="fs-4">Dialogs</span>
+      </a>
+      <hr>
+      <ul class="nav d-block nav-pills mb-auto overflow-y-scroll">
+        {% for dialog in dialogs %}
+          {% with dialog|other_user:user as other_user %}
+            <li class="nav-item w-100">
+              <a href="#" class="d-flex align-items-center text-white text-decoration-none nav-link">
+                <img src="{{ other_user.avatar|default:"/static/img/no-avatar.png" }}" alt="User avatar" width="32" height="32" class="rounded-circle me-2">
+                <p class="text-truncate" title="{{ other_user.login }}"><b>{{ other_user.login }}</b></p>
+              </a>
+            </li>
+          {% endwith %}
+        {% endfor %}
+      </ul>
+      <hr>
+      <div class="dropdown">
+        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <img src="{{ user.avatar|default:"/static/img/no-avatar.png" }}" alt="User avatar" width="32" height="32" class="rounded-circle me-2">
+          <strong>{{ user.login }}</strong>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+          <li><a class="dropdown-item" href="#">New dialog</a></li>
+          <li><a class="dropdown-item" href="#">Settings</a></li>
+          <li><a class="dropdown-item" href="#">Profile</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#">Sign out</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="vr px-0"></div>
+
+    <div class="col text-bg-dark">
+      <div class="d-flex justify-content-center align-items-center h-100">
+        <p class="choose-dialog-label"><- SELECT OR CREATE DIALOG</p>
+      </div>
+      <div class="d-none flex-column h-100">
+        <div class="d-flex gap-1 col-12 mt-3 text-bg-title px-2 py-2">
+          <p class="h5 mt-2" id="dialogTitle">DIALOG TITLE</p>
+        </div>
+        <hr class="w-100 my-1">
+        <div class="d-flex flex-grow-1" style="height: 0">
+          <ul class="d-block overflow-y-scroll list-unstyled" id="messagesContainer">
+            {% for i in messages_count %} <!-- For test only, will be removed -->
+            <li class="message my-message">
+              <div>
+                <span class="message-time">[28.04.2023 19:25]</span>
+                <span class="message-text">Message {{ i }}</span>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="d-flex gap-1 col-12 mb-3">
+          <input type="text" class="form-control" placeholder="Message text..." required maxlength="2048">
+          <button type="button" class="btn btn-primary">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

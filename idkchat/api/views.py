@@ -4,11 +4,13 @@ from typing import Optional
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from channels_redis.core import RedisChannelLayer
 from django.conf import settings
 from django.db.models import Q
 from rest_framework import permissions, status
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 from simplesrp.ng_values import NG
 from simplesrp.server.srp import Verifier
@@ -112,6 +114,12 @@ class LogoutView(APIView):
 
 
 class DialogsView(APIView):
+    class MinRateThrottle(UserRateThrottle):
+        rate = "30/minute"
+    class MaxRateThrottle(UserRateThrottle):
+        rate = "300/day"
+    throttle_classes = [MinRateThrottle, MaxRateThrottle]
+
     def get(self, request: Request, format=None) -> Response:
         user = request.user
         dialogs: list[Dialog] = Dialog.objects.filter(Q(user_1__id=user.id) | Q(user_2__id=user.id))
@@ -149,6 +157,12 @@ class DialogsView(APIView):
 
 
 class MessagesView(APIView):
+    class MinRateThrottle(UserRateThrottle):
+        rate = "5/second"
+    class MaxRateThrottle(UserRateThrottle):
+        rate = "20/minute"
+    throttle_classes = [MinRateThrottle, MaxRateThrottle]
+
     def get(self, request: Request, dialog_id: int, format=None) -> Response:
         user = request.user
         dialog: Optional[Dialog] = Dialog.objects.filter(
@@ -221,6 +235,12 @@ class UsersMeView(APIView):
 
 
 class GetUserByName(APIView):
+    class MinRateThrottle(UserRateThrottle):
+        rate = "1/minute"
+    class MaxRateThrottle(UserRateThrottle):
+        rate = "150/day"
+    throttle_classes = [MinRateThrottle, MaxRateThrottle]
+
     def post(self, request: Request, format=None) -> Response:
         serializer = GetUserByNameSerializer(data=request.data)
         if not serializer.is_valid():

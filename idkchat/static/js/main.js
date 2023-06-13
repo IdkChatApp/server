@@ -20,7 +20,7 @@ if(isLocalNetwork()) {
 }
 window.CDN = "https://link.storjshare.io/s/jwadfbzk4qjnfgqwp52yzhryzata/idkchat";
 window.AVATAR_QUERY = "wrap=0"
-window.DEFAULT_AVATAR = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNMafj/HwAGFwLkTJBHPQAAAABJRU5ErkJggg==";
+window.DEFAULT_AVATAR = "/static/img/no-avatar.png";
 
 // Solution to not working DOMContentLoaded on Cloudflare when both HTML Minify and Rocker Loader are on.
 // https://dev.to/hollowman6/solution-to-missing-domcontentloaded-event-when-enabling-both-html-auto-minify-and-rocket-loader-in-cloudflare-5ch8
@@ -49,4 +49,69 @@ function sortedIndex(array, value) {
         else high = mid;
     }
     return low;
+}
+
+function formatErrorObj(obj) {
+    let errors = "";
+    if(typeof obj !== "object")
+        return obj;
+
+    if(Array.isArray(obj))
+        return obj.join(", ")
+    for (let errorField in obj) {
+        let fieldErrors = formatErrorObj(obj[errorField]);
+        errors += `<p>${errorField}: ${fieldErrors}</p>`
+    }
+
+    return errors;
+}
+
+function showAlert(errorsJson, container, alertType="danger") {
+    let errors = formatErrorObj(errorsJson);
+
+    container.innerHTML = `
+    <div class="alert alert-${alertType} alert-dismissible fade show" role="alert">
+      <h5 class="alert-heading">The following errors have occurred:</h5>
+      ${errors}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    `;
+}
+
+function hideAlert(container) {
+    container.innerHTML = "";
+}
+
+function validateInputs(...inputs) {
+    let valid = true;
+    for(let input of inputs) {
+        if(!input.validity.valid) {
+            input.reportValidity();
+            valid = false;
+        }
+    }
+    return valid;
+}
+
+function setCookie(name, value, expires_in_seconds) {
+    let expires = "";
+    if (expires_in_seconds) {
+        let date = new Date();
+        date.setTime(date.getTime() + (expires_in_seconds * 1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
+
+function getCookie(name) {
+    for (let cookie of document.cookie.split(';')) {
+        if(name !== cookie.split("=")[0]) continue;
+        let value = cookie.split("=")[1];
+        return value.replace(/^"(.*)"$/, '$1');
+    }
+    return null;
+}
+
+function removeCookie(name) {
+    document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
 }

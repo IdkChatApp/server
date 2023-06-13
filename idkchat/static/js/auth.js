@@ -1,39 +1,29 @@
-const auth_title = document.getElementById("auth-form-title");
-const auth_title2 = document.getElementById("auth-form-title2");
-const login_input = document.getElementById("login");
-const password_input = document.getElementById("password");
-const password2_input = document.getElementById("password2");
-const password2_div = document.getElementById("password2-div");
-const btn_login = document.getElementById("btn_login");
-const btn_register = document.getElementById("btn_register");
+const authTitle = document.getElementById("authTitle");
+const authAlertContainer = document.getElementById("authAlertContainer");
+const loginForm = document.getElementById("loginForm");
+const signupForm = document.getElementById("signupForm");
+const lLoginInput = document.getElementById("login_loginInput");
+const lPasswordInput = document.getElementById("login_passwordInput");
+const sLoginInput = document.getElementById("signup_loginInput");
+const sPasswordInput = document.getElementById("signup_passwordInput");
+const sPasswordRepeatInput = document.getElementById("signup_passwordRepeatInput");
 
-function toggleMode() {
-    let login = auth_title.innerText.trim() === "Login";
-    auth_title.innerText = login ? "Register" : "Login";
-    auth_title2.innerText = login ? "or Login (click here)" : "or Register (click here)";
-    password2_div.style.display = login ? "" : "none";
-    btn_register.style.display = login ? "" : "none";
-    btn_login.style.display = login ? "none" : "";
+const FORMS = {
+    "login": loginForm,
+    "sign up": signupForm,
 }
 
-async function _processAuthResponse(resp, json, final_response=true) {
-    let jsonResp = json ? json : await resp.json();
-
-    if(resp.status > 400 && resp.status < 405) {
-        alert(jsonResp.message);
-        return;
+function showForm(form) {
+    for(let f in FORMS) {
+        if(f === form) {
+            FORMS[f].classList.remove("d-none");
+            FORMS[f].classList.add("d-flex");
+            continue;
+        }
+        FORMS[f].classList.remove("d-flex");
+        FORMS[f].classList.add("d-none");
     }
-
-    if(resp.status !== 200) {
-        alert("Unknown error occured! Please try again later.");
-        return;
-    }
-
-    if(!final_response) return jsonResp;
-
-    localStorage.setItem("token", jsonResp["token"]);
-    location.href = "/dialogs";
-    return jsonResp;
+    authTitle.innerText = form.charAt(0).toUpperCase() + form.slice(1);
 }
 
 async function hashPassword(salt, password) {
@@ -47,8 +37,12 @@ async function hashPassword(salt, password) {
 }
 
 async function login() {
-    let login = login_input.value.trim();
-    let password = password_input.value.trim();
+    lLoginInput.value = lLoginInput.value.trim();
+    lPasswordInput.value = lPasswordInput.value.trim();
+    if(!validateInputs(lLoginInput, lPasswordInput)) return;
+
+    let login = lLoginInput.value.trim();
+    let password = lPasswordInput.value.trim();
 
     let srp = new SrpClient(login, password, "sha-256", 2048);
     await srp.preCalculateK();
@@ -60,9 +54,15 @@ async function login() {
         },
         body: JSON.stringify({"login": login})
     });
-    let jsonResp = await _processAuthResponse(resp, undefined, false);
-    if(!jsonResp)
-        return;
+    let jsonResp = await resp.json();
+
+    if(resp.status >= 400 && resp.status < 499) {
+        return showAlert(jsonResp, authAlertContainer);
+    }
+    if(resp.status > 499) {
+        return showAlert(`Unknown response (status code ${resp.status})! Please try again later.`, authAlertContainer);
+    }
+
     let salt = new SrpBigInteger(jsonResp["salt"]);
     let B = new SrpBigInteger(jsonResp["B"]);
     let ticket = jsonResp["ticket"];
@@ -81,18 +81,22 @@ async function login() {
         body: JSON.stringify({"A": A.toStringHex(), "M": M.toStringHex(), "ticket": ticket})
     });
     jsonResp = await resp.json();
+    if(resp.status >= 400 && resp.status < 499) {
+        return showAlert(jsonResp, authAlertContainer);
+    }
+    if(resp.status > 499) {
+        return showAlert(`Unknown response (status code ${resp.status})! Please try again later.`, authAlertContainer);
+    }
+
     if(!srp.verify_HAMK(new SrpBigInteger(jsonResp["H_AMK"]))) {
-        console.log(srp.H_AMK)
-        alert("Unknown error occured! Please try again.??");
-        return;
+        return showAlert(`Unknown response (status code ${resp.status})! Please try again later.`, authAlertContainer);
     }
     let privKey = jsonResp["privKey"];
     const crypt = new OpenCrypto();
     try {
         await crypt.decryptPrivateKey(privKey, key, {name: 'RSA-OAEP'});
     } catch {
-        alert("Can't decrypt private key!.");
-        return;
+        return showAlert("Can't decrypt private key!", authAlertContainer);
     }
 
     if(resp.status === 200) {
@@ -100,16 +104,23 @@ async function login() {
         localStorage.setItem("encPrivKey", privKey);
     }
 
-    await _processAuthResponse(resp, jsonResp);
+    setCookie("token", jsonResp["token"], 86400*2);
+    localStorage.setItem("token", jsonResp["token"]);
+    location.href = "/dialogs";
 }
 
-async function register() {
-    let login = login_input.value.trim();
-    let password = password_input.value.trim();
-    let password2 = password2_input.value.trim();
+async function signup() {
+    sLoginInput.value = sLoginInput.value.trim();
+    sPasswordInput.value = sPasswordInput.value.trim();
+    sPasswordRepeatInput.value = sPasswordRepeatInput.value.trim();
+    if(!validateInputs(sLoginInput, sPasswordInput, sPasswordRepeatInput)) return;
+
+    let login = sLoginInput.value.trim();
+    let password = sPasswordInput.value.trim();
+    let password2 = sPasswordRepeatInput.value.trim();
 
     if(password !== password2) {
-        alert("Passwords do not match!");
+        showAlert("Passwords do not match!", authAlertContainer);
         return;
     }
 
@@ -131,12 +142,20 @@ async function register() {
         },
         body: JSON.stringify({"login": login, "salt": salt.toStringHex(), "verifier": vkey.toStringHex(), "privKey": privKey, "pubKey": pubKey})
     });
-    if(resp.status === 200) {
-        localStorage.setItem("KEY", key);
-        localStorage.setItem("encPrivKey", privKey);
+    let jsonResp = await resp.json();
+
+    if(resp.status >= 400 && resp.status < 499) {
+        return showAlert(jsonResp, authAlertContainer);
+    }
+    if(resp.status > 499) {
+        return showAlert(`Unknown response (status code ${resp.status})! Please try again later.`, authAlertContainer);
     }
 
-    await _processAuthResponse(resp);
+    setCookie("token", jsonResp["token"], 86400*2);
+    localStorage.setItem("KEY", key);
+    localStorage.setItem("encPrivKey", privKey);
+    localStorage.setItem("token", jsonResp["token"]);
+    location.href = "/dialogs";
 }
 
 if (document.readyState !== 'loading') {
