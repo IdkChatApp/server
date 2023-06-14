@@ -10,23 +10,19 @@ def index_page(request: HttpRequest) -> HttpResponse:
     #return render(request, "index.html")
     return redirect("/auth")
 
+
 def auth_page(request: HttpRequest) -> HttpResponse:
     return render(request, "auth.html")
 
-def dialogs_page(request: HttpRequest) -> HttpResponse:
-    return render(request, "dialogs.html")
-
 @require_auth
-def _dialogs_page(request: HttpRequest, session: Session) -> HttpResponse:
+def dialogs_page(request: HttpRequest, session: Session) -> HttpResponse:
     user = session.user
-    return render(request, "_dialogs.html", context={
+    return render(request, "dialogs.html", context={
         "user": user,
         "dialogs": Dialog.objects.filter(Q(user_1=user) | Q(user_2=user)),
         "messages_count": range(200),
     })
 
+
 def profile_page(request: HttpRequest) -> HttpResponse:
     return render(request, "profile.html")
-
-def feedback_page(request: HttpRequest) -> HttpResponse:
-    return render(request, "feedback.html")

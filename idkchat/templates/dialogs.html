@@ -1,5 +1,7 @@
+{% load dialogs_filters %}
+
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,45 +9,94 @@
     <meta name="keywords" content="idkchat,chat,simple,minimalistic,real-time">
     <meta name="author" content="RuslanUC">
     <title>IdkChat - Dialogs</title>
-    <link rel="stylesheet" type="text/css" href="/static/css/main.css">
     <link rel="stylesheet" type="text/css" href="/static/css/dialogs.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-    <script src="/static/js/theme.js"></script>
     <script src="/static/js/main.js"></script>
     <script src="/static/js/OpenCrypto.min.js"></script>
 </head>
-<body class="theme-dark">
-    <main class="content content-dialogs grid-container" style="height: 90vh;">
-        <div class="dialogs-list">
-            <ul class="dialogs" id="dialogs"></ul>
+<body class="vh-100">
+<div class="container-fluid h-100">
+  <div class="row flex-nowrap h-100">
+    <div class="d-flex flex-column p-3 text-bg-dark col-3 h-100">
+      <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+        <span class="fs-4">Dialogs</span>
+      </a>
+      <hr>
+      <ul class="nav d-block nav-pills mb-auto overflow-y-scroll" id="dialogsContainer">
+        {% for dialog in dialogs %}
+          {% with dialog|other_user:user as other_user %}
+            <li class="nav-item w-100" id="dialog-id-{{ dialog.id }}">
+              <a href="#" class="d-flex align-items-center text-white text-decoration-none nav-link" onclick="selectDialog({{ dialog.id }});">
+                <img src="{{ other_user.avatar|default:"/static/img/no-avatar.png" }}" alt="User avatar" width="32" height="32" class="rounded-circle me-2">
+                <p class="text-truncate" title="{{ other_user.login }}"><b>{{ other_user.login }}</b></p>
+              </a>
+            </li>
+          {% endwith %}
+        {% endfor %}
+      </ul>
+      <hr>
+      <div class="dropdown">
+        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+          <img src="{{ user.avatar|default:"/static/img/no-avatar.png" }}" alt="User avatar" width="32" height="32" class="rounded-circle me-2">
+          <strong>{{ user.login }}</strong>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+          <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#newDialogModal">New dialog</a></li>
+          <li><a class="dropdown-item" href="/settings">Settings</a></li>
+          <li><a class="dropdown-item" href="/profile">Profile</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#" onclick="logout();">Sign out</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="vr px-0"></div>
+
+    <div class="col text-bg-dark">
+      <div class="d-none justify-content-center align-items-center h-100" id="selDialogContainer">
+        <p class="choose-dialog-label"><- SELECT OR CREATE DIALOG</p>
+      </div>
+      <div class="d-flex flex-column h-100" id="actualDialogContainer">
+        <div class="d-flex gap-1 col-12 mt-3 text-bg-title px-2 py-2">
+          <p class="h5 mt-2" id="dialogTitle">...</p>
         </div>
-
-        <div class="dialog-add">
-            <button class="dialog-add__button" onclick="newDialog();">Add</button>
+        <hr class="w-100 my-1">
+        <div class="d-flex flex-grow-1" style="height: 0">
+          <ul class="d-block overflow-y-scroll list-unstyled w-100" id="messagesContainer"></ul>
         </div>
-
-        <div class="dialog-title" id="dialog-title">
-            Select dialog
+        <div class="d-flex gap-1 col-12 mb-3">
+          <input id="messageInput" type="text" class="form-control" placeholder="Message text..." required maxlength="2048">
+          <button type="button" class="btn btn-primary" onclick="sendMessage();">Send</button>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-        <div class="messages-list">
-            <ul class="messages" id="messages"></ul>
+<div class="modal fade" data-bs-backdrop="static" id="newDialogModal" tabindex="-1" aria-labelledby="newDialogodalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="newDialogAppModalLabel">New dialog</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="deleteAppAlertContainer"></div>
+                <div class="form-group">
+                    <label for="adddial_userName">Username</label>
+                    <input type="text" class="form-control" id="adddial_userName" placeholder="Enter another user's name" required maxlength="32">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="newDialog();">Create</button>
+            </div>
         </div>
+    </div>
+</div>
 
-        <div class="dialog-input">
-            <input type="text" name="message" placeholder="Text..." id="message-input" class="dialog-input__input">
-        </div>
-
-        <div class="dialog-send-button">
-            <button onclick="sendMessage();" class="dialog-send-button__button">Send</button>
-        </div>
-    </main>
-
-    <footer class="footer text-center">
-        <p>IdkChat 2022</p>
-        Support: <a href="mailto:idkchat@pepega.ml">idkchat@pepega.ml</a>
-    </footer>
-
-    <script src="/static/js/dialogs.js"></script>
+<script src="/static/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/dialogs.js"></script>
 </body>
 </html>

@@ -1,349 +1,42 @@
-.dialogs {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow-y: scroll;
-    overflow-x: hidden;
+.text-bg-title {
+    color: #fff!important;
+    background-color: RGBA(43, 47, 51, var(--bs-bg-opacity, 1));
+!important
 }
 
-.dialogs::-webkit-scrollbar {
-    width: 10px;
-    background-color: #ffffff;
-}
-
-.dialogs::-webkit-scrollbar-thumb {
-    background-color: #C1C1C1;
-}
-
-.dialogs__item {
-    width: 100%;
-    padding: 0;
-    float: left;
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
-    padding-left: 10px !important;
-    right: 10px;
-}
-
-.dialogs__item__avatar {
-    border-radius: 50%;
-}
-
-.dialogs__item__username {
-    vertical-align: top;
+.message-time {
+    font-size: x-small;
     margin-left: 3px;
-    font-size: 18px !important;
+    margin-right: 3px;
 }
 
-.messages {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow-y: scroll;
-    overflow-x: hidden;
-}
-
-.messages::-webkit-scrollbar {
-    width: 10px;
-    background-color: #ffffff;
-}
-
-.messages::-webkit-scrollbar-thumb {
-    background-color: #C1C1C1;
-}
-
-.messages__item {
-    width: 100%;
-    padding: 0;
-    float: left;
-    text-align: left;
-    margin-top: 2px;
+.message-text {
+    margin-left: 3px;
+    margin-right: 3px;
 }
 
 .message {
-    margin-top: 10px;
-    float: left !important;
-    text-align: left !important;
-    margin-right: 10px;
     width: 100%;
+    color: #719eff;
+    float: left;
+    text-align: left;
 }
-
-.message > span {
-    vertical-align: top;
-    margin-left: 3px;
-    font-size: 18px !important;
-    color: var(--gradient-1);
-}
+.message > div { width: auto; float: left; }
+.message > div > .message-time { float: left; }
+.message > div > .message-text { float: right; }
 
 .my-message {
-    margin-top: 10px;
-    float: right !important;
-    text-align: right !important;
-    margin-right: 10px;
-    width: 100%;
+    color: #C623FF;
+    float: right;
+    text-align: right;
 }
+.my-message > div { width: auto; float: right; }
+.my-message > div > .message-time { float: right; }
+.my-message > div > .message-text { float: left; }
 
-.my-message > .message-time, .message > .message-time {
-    font-size: 10px !important;
-    vertical-align: middle;
-}
-
-.my-message > span {
-    vertical-align: top;
-    margin-left: 3px;
-    font-size: 18px !important;
-    color: var(--gradient-2);
-}
-
-.dialog-add {
-    grid-row-start: 1;
-    grid-column-start: 1;
-
-    grid-row-end: 2;
-    grid-column-end: 4;
-}
-
-.dialog-add__button {
-    width: 100%;
-    height: 75%;
-    font-size: 18px;
-}
-
-.dialogs-list {
-    grid-row-start: 2;
-    grid-column-start: 1;
-
-    grid-row-end: 16;
-    grid-column-end: 4;
-}
-
-.dialog-title {
-    grid-row-start: 1;
-    grid-column-start: 4;
-
-    grid-row-end: 2;
-    grid-column-end: 16;
-
-    font-size: 24px;
-    border: 2px solid;
-    border-image: linear-gradient(to bottom, var(--gradient-1), var(--gradient-2)) 1;
-
-    padding-top: 10px;
-    padding-left: 10px;
-    padding-bottom: 10px;
-    margin-left: 5px;
-    margin-right: 5px;
-    margin-top: 3px;
-}
-
-.messages-list {
-    grid-row-start: 2;
-    grid-column-start: 4;
-
-    grid-row-end: 15;
-    grid-column-end: 16;
-}
-
-.dialog-input {
-    grid-row-start: 15;
-    grid-column-start: 4;
-
-    grid-row-end: 16;
-    grid-column-end: 15;
-}
-
-.dialog-send-button {
-    grid-row-start: 15;
-    grid-column-start: 15;
-
-    grid-row-end: 16;
-    grid-column-end: 16;
-}
-
-.dialog-input__input, .dialog-send-button__button {
-    width: 100%;
-    height: 100%;
-    font-size: 18px;
-}
-
-@media screen and (max-width: 1080px) {
-    .dialog-add {
-        grid-row-start: 1;
-        grid-column-start: 14;
-
-        grid-row-end: 2;
-        grid-column-end: 16;
-    }
-
-    .dialogs__item__username {
-        font-size: 40px !important;
-    }
-
-    .dialogs__item__avatar {
-        height: 64px;
-        width: 64px;
-    }
-
-    .dialog-add__button {
-        font-size: 32px;
-    }
-
-    .dialogs-list {
-        grid-row-start: 1;
-        grid-column-start: 1;
-
-        grid-row-end: 5;
-        grid-column-end: 16;
-    }
-
-    .dialog-title {
-        grid-row-start: 5;
-        grid-column-start: 1;
-
-        grid-row-end: 6;
-        grid-column-end: 16;
-
-        font-size: 36px;
-    }
-
-    .messages-list {
-        grid-row-start: 6;
-        grid-column-start: 1;
-
-        grid-row-end: 15;
-        grid-column-end: 16;
-    }
-
-    .message > span {
-        font-size: 32px !important;
-    }
-
-    .my-message > .message-time, .message > .message-time {
-        font-size: 20px !important;
-    }
-
-    .my-message > span {
-        font-size: 32px !important;
-    }
-
-    .dialog-input {
-        grid-row-start: 15;
-        grid-column-start: 1;
-
-        grid-row-end: 16;
-        grid-column-end: 14;
-    }
-
-    .dialog-send-button {
-        grid-row-start: 15;
-        grid-column-start: 14;
-
-        grid-row-end: 16;
-        grid-column-end: 16;
-    }
-
-    .dialog-send-button__button, .dialog-input__input {
-        font-size: 32px;
-    }
-}
-
-@media screen and (max-width: 720px) {
-    .dialog-send-button__button, .dialog-input__input {
-        font-size: 32px;
-    }
-}
-
-@media screen and (max-width: 576px) {
-    .dialogs__item__username {
-        font-size: 28px !important;
-    }
-
-    .dialogs__item__avatar {
-        height: 40px;
-        width: 40px;
-    }
-
-    .dialog-title {
-        font-size: 24px;
-    }
-
-    .dialog-add__button {
-        font-size: 20px;
-    }
-
-    .message > span {
-        font-size: 20px !important;
-    }
-
-    .my-message > .message-time, .message > .message-time {
-        font-size: 12px !important;
-    }
-
-    .my-message > span {
-        font-size: 20px !important;
-    }
-
-    .dialog-send-button__button, .dialog-input__input {
-        font-size: 20px;
-    }
-}
-
-@media screen and (max-width: 360px) {
-    .dialog-add {
-        grid-row-start: 1;
-        grid-column-start: 13;
-
-        grid-row-end: 2;
-        grid-column-end: 16;
-    }
-
-    .dialogs__item__username {
-        font-size: 20px !important;
-    }
-
-    .dialogs__item__avatar {
-        height: 28px;
-        width: 28px;
-    }
-
-    .dialog-title {
-        font-size: 20px;
-    }
-
-    .dialog-add__button {
-        font-size: 12px;
-    }
-
-    .message > span {
-        font-size: 14px !important;
-    }
-
-    .my-message > .message-time, .message > .message-time {
-        font-size: 8px !important;
-    }
-
-    .my-message > span {
-        font-size: 14px !important;
-    }
-
-    .dialog-send-button__button, .dialog-input__input {
-        font-size: 11px;
-    }
-}
-
-.dialog-input__input {
-    background-color: var(--bg-color-messages);
-    border: 1px solid;
-    border-image: linear-gradient(to top, var(--gradient-1), var(--gradient-2)) 1;
-    color: var(--text-color);
-}
-
-.content-dialogs {
-    padding: 16px 1% 12px !important;
-}
-
-.dialog-selected {
-    background-color: rgb(var(--gradient-2-rgb), .25);
+.choose-dialog-label {
+    border: 1px solid white;
+    border-radius: 20px;
+    padding: 7px;
+    user-select: none;
 }

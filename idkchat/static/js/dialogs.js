@@ -1,7 +1,11 @@
-const dialogs = document.getElementById("dialogs");
-const dialog_title = document.getElementById("dialog-title");
-const messages = document.getElementById("messages");
-const message_input = document.getElementById("message-input");
+const dialogs = document.getElementById("dialogsContainer");
+const dialog_title = document.getElementById("dialogTitle");
+const messages = document.getElementById("messagesContainer");
+const message_input = document.getElementById("messageInput");
+const dUserName = document.getElementById("adddial_userName");
+const selDialogContainer = document.getElementById("selDialogContainer");
+const actualDialogContainer = document.getElementById("actualDialogContainer");
+const newDialogModal = document.getElementById("newDialogModal");
 const crypt = new OpenCrypto();
 
 t = localStorage.getItem("token");
@@ -32,7 +36,8 @@ async function decryptMessage(message, chatKey) {
 
 
 function updateDialog(dialog_id) {
-    let dialog_obj = DIALOGS[dialog_id];
+    // TODO: UPDATE DIALOG
+    /*let dialog_obj = DIALOGS[dialog_id];
     let dialog = document.getElementById(`dialog-id-${dialog_id}`);
     if(!dialog || !dialog_obj) return;
 
@@ -52,25 +57,7 @@ function updateDialog(dialog_id) {
     username.style.color = dialog_obj["new_messages"] ? "#ff0000" : "";
 
     avatar.src = avatarUrl(dialog_obj["user"]["id"], dialog_obj["user"]["avatar"]);
-    ensureImageLoaded(avatar, DEFAULT_AVATAR);
-}
-
-function ensureImageLoaded(image_element, default_src) {
-    image_element.dataset.load_tries = "0";
-    image_element.onerror = () => {
-        setTimeout(() => {
-            if(+image_element.dataset.load_tries > 5) {
-                image_element.dataset.load_tries = "0";
-                image_element.src = default_src;
-                return;
-            }
-            image_element.dataset.load_tries = (+image_element.dataset.load_tries+1).toString();
-            image_element.src = image_element.src+(image_element.src.includes("?") ? "&" : "?")+`_C=${new Date().getTime()}`;
-        }, 500);
-    }
-    image_element.onload = () => {
-        image_element.dataset.load_tries = "0";
-    }
+    ensureImageLoaded(avatar, DEFAULT_AVATAR);*/
 }
 
 async function addDialog(dialog) {
@@ -80,40 +67,28 @@ async function addDialog(dialog) {
     if(!(dialog_id in MESSAGES_CACHE)) {
         MESSAGES_CACHE[dialog_id] = {"messages": [], "message_ids": []};
     }
-    if(dialog_id in DIALOGS) {
+
+    if(!(dialog_id in DIALOGS)) DIALOGS[dialog_id] = dialog;
+    if(DIALOGS[dialog_id]["chatKey"] === undefined) {
+        let privKey = await crypt.decryptPrivateKey(localStorage.getItem("encPrivKey"), localStorage.getItem("KEY"), { name: 'RSA-OAEP' });
+        dialog["chatKey"] = await crypt.decryptKey(privKey, dialog["key"], {type: 'raw', name: 'AES-GCM', length: 256, usages: ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey'], isExtractable: true});
+    }
+    if(dialog_id in DIALOGS || document.getElementById(`dialog-id-${dialog_id}`) !== null) {
         Object.assign(DIALOGS[dialog["id"]], dialog);
         updateDialog(dialog_id);
         return;
     }
 
-    let privKey = await crypt.decryptPrivateKey(localStorage.getItem("encPrivKey"), localStorage.getItem("KEY"), { name: 'RSA-OAEP' });
-    dialog["chatKey"] = await crypt.decryptKey(privKey, dialog["key"], {type: 'raw', name: 'AES-GCM', length: 256, usages: ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey'], isExtractable: true})
-
-    DIALOGS[dialog_id] = dialog;
-
     let dialog_el = document.createElement("li");
-    dialog_el.classList.add("dialogs__item");
-    dialog_el.id = `dialog-id-${dialog_id}`;
-    dialog_el.addEventListener("click", () => {selectDialog(dialog_id)});
-
-    let avatar_img = document.createElement("img");
-    avatar_img.classList.add("dialogs__item__avatar");
-    avatar_img.src = avatarUrl(user["id"], user["avatar"]);
-    avatar_img.width = 32;
-    avatar_img.height = 32;
-    ensureImageLoaded(avatar_img, DEFAULT_AVATAR);
-
-    let name = document.createElement("span");
-    name.classList.add("dialogs__item__username");
-    name.innerText = user["username"];
-    if(dialog["new_messages"])
-        name.style.color = "#ff0000";
-
-    dialog_el.appendChild(avatar_img);
-    dialog_el.innerHTML += "\n";
-    dialog_el.appendChild(name);
-
     dialogs.appendChild(dialog_el);
+    dialog_el.outerHTML = `
+    <li class="nav-item w-100" id="dialog-id-${dialog_id}">
+      <a href="#" class="d-flex align-items-center text-white text-decoration-none nav-link" onclick="selectDialog(${dialog_id});">
+        <img src="${avatarUrl(user["id"], user["avatar"])}" alt="User avatar" width="32" height="32" class="rounded-circle me-2">
+        <p class="text-truncate" title="${user["username"]}"><b>${user["username"]}</b></p>
+      </a>
+    </li>
+    `;
 }
 
 function clearMessages() {
@@ -126,32 +101,18 @@ async function addMessage(dialog_id, message) {
         MESSAGES_CACHE[dialog_id]["message_ids"].push(message_id);
         MESSAGES_CACHE[dialog_id]["messages"].push(message);
     }
-    if(getSelectedDialog() !== dialog_id)
+    if(window.CURRENT_DIALOG !== dialog_id)
         return;
     if(document.getElementById(`message-id-${message_id}`))
         return;
+
+    let dialog = DIALOGS[dialog_id];
+    message["text"] = "text" in message ? message["text"] : await decryptMessage(message["content"], dialog["chatKey"]);
 
     let idx = sortedIndex(MESSAGES, message_id);
     MESSAGES.splice(idx, 0, message_id);
 
     let message_el = document.createElement("li");
-    message_el.id = `message-id-${message_id}`;
-    message_el.classList.add(message["author"] === USER_ID ? "my-message" : "message");
-
-    let date = new Date(message["created_at"]*1000);
-    let timestamp = document.createElement("span");
-    timestamp.classList.add("message-time");
-    timestamp.innerText = `[${padDate(date.getDate())}.${padDate(date.getMonth())}.${date.getFullYear()} ${padDate(date.getHours())}:${padDate(date.getMinutes())}]`;
-
-    let message_text = document.createElement("span");
-    let dialog = DIALOGS[dialog_id];
-    message["text"] = "text" in message ? message["text"] : await decryptMessage(message["content"], dialog["chatKey"]);
-    message_text.innerText = message["text"];
-
-    message_el.appendChild(message["author"] === USER_ID ? message_text : timestamp);
-    message_el.innerHTML += "\n";
-    message_el.appendChild(message["author"] === USER_ID ? timestamp : message_text);
-
     let insertLast = idx === MESSAGES.length-1;
     let before = MESSAGES[idx+1];
     before = document.getElementById(`message-id-${before}`);
@@ -161,6 +122,16 @@ async function addMessage(dialog_id, message) {
         messages.insertBefore(message_el, before);
     }
 
+    let date = new Date(message["created_at"]*1000);
+    message_el.outerHTML = `
+    <li class="message ${message["author"] === USER_ID ? "my-message" : ""}" id="message-id-${message_id}">
+      <div>
+        <span class="message-time">[${padDate(date.getDate())}.${padDate(date.getMonth())}.${date.getFullYear()} ${padDate(date.getHours())}:${padDate(date.getMinutes())}]</span>
+        <span class="message-text">${message["text"]}</span>
+      </div>
+    </li>
+    `;
+
     if(insertLast)
         messages.scrollTo(0, messages.scrollHeight);
 }
@@ -169,20 +140,14 @@ function padDate(d) {
     return ("0"+d).slice(-2)
 }
 
-function getSelectedDialog() {
-    let selected_dialogs = document.getElementsByClassName("dialog-selected");
-    if(selected_dialogs.length > 0) {
-        return parseInt(selected_dialogs[0].id.replace("dialog-id-", ""));
-    }
-    return window.CURRENT_DIALOG;
-}
-
 async function sendMessage() {
+    message_input.value = message_input.value.trim();
+    if(!validateInputs(message_input)) return;
     let text = message_input.value.trim();
     if(!text)
         return;
 
-    let dialog_id = getSelectedDialog();
+    let dialog_id = window.CURRENT_DIALOG;
     let dialog = DIALOGS[dialog_id];
     let content = await encryptMessage(text, dialog["chatKey"])
 
@@ -253,12 +218,17 @@ async function selectDialog(dialog_id) {
     let dialog_to_sel = document.getElementById(`dialog-id-${dialog_id}`);
     if(!dialog_to_sel) return;
 
-    for(let dialog of document.getElementsByClassName("dialog-selected")) {
-        dialog.classList.remove("dialog-selected");
+    for(let active_el of document.getElementsByClassName("active")) {
+        active_el.classList.remove("active");
     }
-
-    dialog_to_sel.classList.add("dialog-selected");
+    dialog_to_sel.getElementsByTagName("a")[0].classList.add("active");
     dialog_title.innerText = DIALOGS[dialog_id]["user"]["username"];
+
+    selDialogContainer.classList.add("d-none")
+    selDialogContainer.classList.remove("d-flex");
+    actualDialogContainer.classList.add("d-flex")
+    actualDialogContainer.classList.remove("d-none");
+
     window.MESSAGES = [];
     clearMessages();
 
@@ -272,7 +242,7 @@ async function selectDialog(dialog_id) {
         window._WS.send(JSON.stringify({
             "op": 2,
             "d": {
-                "dialog_id": getSelectedDialog(),
+                "dialog_id": window.CURRENT_DIALOG,
                 "message_id": -1
             }
         }));
@@ -280,7 +250,9 @@ async function selectDialog(dialog_id) {
 }
 
 async function newDialog() {
-    let username = prompt("Username:").trim();
+    dUserName.value = dUserName.value.trim();
+    if(!validateInputs(dUserName)) return;
+    let username = dUserName.value.trim();
     if(!username) return;
 
     let resp = await fetch(`${window.API_ENDPOINT}/users/get-by-name`, {
@@ -332,6 +304,9 @@ async function newDialog() {
 
     await addDialog(jsonResp);
     await selectDialog(jsonResp["id"]);
+
+    let modal = bootstrap.Modal.getInstance(newDialogModal);
+    modal.hide();
 }
 
 async function _ws_handle_new_message(data) {
@@ -341,7 +316,7 @@ async function _ws_handle_new_message(data) {
     let message = data["message"];
     await addMessage(dialog["id"], message);
 
-    if(message["author"] !== USER_ID && getSelectedDialog() === dialog["id"]) {
+    if(message["author"] !== USER_ID && window.CURRENT_DIALOG === dialog["id"]) {
         window._WS.send(JSON.stringify({
             "op": 2,
             "d": {

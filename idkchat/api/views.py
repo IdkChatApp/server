@@ -236,7 +236,7 @@ class UsersMeView(APIView):
 
 class GetUserByName(APIView):
     class MinRateThrottle(UserRateThrottle):
-        rate = "1/minute"
+        rate = "30/minute"
     class MaxRateThrottle(UserRateThrottle):
         rate = "150/day"
     throttle_classes = [MinRateThrottle, MaxRateThrottle]

@@ -115,3 +115,11 @@ function getCookie(name) {
 function removeCookie(name) {
     document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
 }
+
+function logout() {
+    removeCookie("token");
+    localStorage.removeItem("token");
+    localStorage.removeItem("KEY");
+    localStorage.removeItem("encPrivKey");
+    location.href = "/auth";
+}
