@@ -17,11 +17,14 @@
 </head>
 <body class="vh-100">
 <div class="container-fluid h-100">
-  <div class="row flex-nowrap h-100">
-    <div class="d-flex flex-column p-3 text-bg-dark col-3 h-100">
-      <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-        <span class="fs-4">Dialogs</span>
-      </a>
+  <div class="row h-100">
+    <div class="d-flex d-sm-flex flex-column p-3 text-bg-dark col-sm-3 col-12 h-100" id="sidebar">
+      <div class="d-flex justify-content-between">
+        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+            <span class="fs-4">Dialogs</span>
+        </a>
+        <button type="button" class="btn-close btn-close-white d-sm-none d-block" onclick="hideSidebar();"></button>
+      </div>
       <hr>
       <ul class="nav d-block nav-pills mb-auto overflow-y-scroll" id="dialogsContainer">
         {% for dialog in dialogs %}
@@ -54,11 +57,16 @@
     <div class="vr px-0"></div>
 
     <div class="col text-bg-dark">
-      <div class="d-none justify-content-center align-items-center h-100" id="selDialogContainer">
-        <p class="choose-dialog-label"><- SELECT OR CREATE DIALOG</p>
+      <div class="d-flex justify-content-center align-items-center h-100" id="selDialogContainer">
+        <a class="choose-dialog-label text-decoration-none" style="color: white;" onclick="showSidebar();"><- SELECT OR CREATE DIALOG</a>
       </div>
-      <div class="d-flex flex-column h-100" id="actualDialogContainer">
+      <div class="d-none flex-column h-100" id="actualDialogContainer">
         <div class="d-flex gap-1 col-12 mt-3 text-bg-title px-2 py-2">
+          <button type="button" class="btn btn-outline-light d-sm-none d-block p-0 border-0" onclick="showSidebar();">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+            </svg>
+          </button>
           <p class="h5 mt-2" id="dialogTitle">...</p>
         </div>
         <hr class="w-100 my-1">
@@ -75,25 +83,25 @@
 </div>
 
 <div class="modal fade" data-bs-backdrop="static" id="newDialogModal" tabindex="-1" aria-labelledby="newDialogodalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="newDialogAppModalLabel">New dialog</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="deleteAppAlertContainer"></div>
-                <div class="form-group">
-                    <label for="adddial_userName">Username</label>
-                    <input type="text" class="form-control" id="adddial_userName" placeholder="Enter another user's name" required maxlength="32">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="newDialog();">Create</button>
-            </div>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="newDialogAppModalLabel">New dialog</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="deleteAppAlertContainer"></div>
+        <div class="form-group">
+          <label for="adddial_userName">Username</label>
+          <input type="text" class="form-control" id="adddial_userName" placeholder="Enter another user's name" required maxlength="32">
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="newDialog();">Create</button>
+      </div>
     </div>
+  </div>
 </div>
 
 <script src="/static/js/bootstrap.bundle.min.js"></script>

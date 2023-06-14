@@ -6,6 +6,7 @@ const dUserName = document.getElementById("adddial_userName");
 const selDialogContainer = document.getElementById("selDialogContainer");
 const actualDialogContainer = document.getElementById("actualDialogContainer");
 const newDialogModal = document.getElementById("newDialogModal");
+const sidebar = document.getElementById("sidebar");
 const crypt = new OpenCrypto();
 
 t = localStorage.getItem("token");
@@ -236,6 +237,7 @@ async function selectDialog(dialog_id) {
     for(let message of MESSAGES_CACHE[dialog_id]["messages"]) {
         await addMessage(dialog_id, message);
     }
+    hideSidebar();
     fetchMessages(dialog_id).then();
 
     if(DIALOGS[dialog_id]["new_messages"]) {
@@ -307,6 +309,7 @@ async function newDialog() {
 
     let modal = bootstrap.Modal.getInstance(newDialogModal);
     modal.hide();
+    dUserName.value = "";
 }
 
 async function _ws_handle_new_message(data) {
@@ -386,4 +389,18 @@ if (document.readyState !== 'loading') {
         await fetchDialogs();
         initWs();
     }, false);
+}
+
+function hideSidebar() {
+    if(sidebar.classList.contains("d-flex")) {
+        sidebar.classList.add("d-none");
+        sidebar.classList.remove("d-flex");
+    }
+}
+
+function showSidebar() {
+    if(sidebar.classList.contains("d-none")) {
+        sidebar.classList.add("d-flex");
+        sidebar.classList.remove("d-none");
+    }
 }
