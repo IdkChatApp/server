@@ -168,3 +168,19 @@ S3_BUCKET = json_settings.get("S3_BUCKET", None) or environ.get("S3_BUCKET")
 S3_ENDPOINT = json_settings.get("S3_ENDPOINT", None) or environ.get("S3_ENDPOINT")
 S3_ID = json_settings.get("S3_ID", None) or environ.get("S3_ID")
 S3_KEY = json_settings.get("S3_KEY", None) or environ.get("S3_KEY")
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+AWS_S3_ENDPOINT_URL = environ.get("AWS_S3_ENDPOINT_URL")
+AWS_ACCESS_KEY_ID = environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = environ.get("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = environ.get("AWS_STORAGE_BUCKET_NAME")
+if None in (AWS_S3_ENDPOINT_URL, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME):
+    del STORAGES["default"]

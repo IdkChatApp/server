@@ -1,6 +1,7 @@
 from hashlib import sha256
 from time import time
 from typing import Optional
+from uuid import uuid4
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -18,7 +19,7 @@ from simplesrp.server.srp import Verifier
 from ws.utils import WS_OP
 from .models import User, Session, PendingAuth, Dialog, Message, ReadState
 from .serializers import RegisterSerializer, LoginStartSerializer, LoginSerializer, DialogSerializer, MessageSerializer, \
-    MessageCreateSerializer, DialogCreateSerializer, UserSerializer, GetUserByNameSerializer
+    MessageCreateSerializer, DialogCreateSerializer, UserSerializer, GetUserByNameSerializer, UserPatchSerializer
 from .storage import S3Storage
 from .utils import JWT, getImage
 
@@ -219,17 +220,17 @@ class UsersMeView(APIView):
         return Response(UserSerializer(request.user).data)
 
     def patch(self, request: Request, format=None) -> Response:
-        user = request.user
-        if request.data["avatar"] or request.data["avatar"] is None:
-            avatar = request.data["avatar"]
-            if avatar is not None:
-                image = getImage(avatar)
-                avatar = user.avatar
-                if (avatar_hash := S3Storage.setAvatar(user.id, image, 512)) is not None:
-                    avatar = avatar_hash
+        serializer = UserPatchSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            user.avatar = avatar
-            user.save()
+        user = request.user
+        avatar = serializer.validated_data["avatar"]
+        if avatar is not None:
+            ext = avatar.name.split(".")[-1]
+            avatar.name = f"{user.id}_{uuid4()}.{ext}"
+        user.avatar = avatar
+        user.save()
 
         return Response(UserSerializer(user).data)
 

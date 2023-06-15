@@ -1,38 +1,45 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="IdkChat - simple and minimalistic chat app.">
-  <meta name="keywords" content="idkchat,chat,simple,minimalistic,real-time">
-  <meta name="author" content="RuslanUC">
-  <title>IdkChat - Profile</title>
-  <link rel="stylesheet" type="text/css" href="/static/css/main.css">
-  <link rel="stylesheet" type="text/css" href="/static/css/profile.css">
-  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-  <script src="/static/js/theme.js"></script>
-  <script src="/static/js/main.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="IdkChat - simple and minimalistic chat app.">
+    <meta name="keywords" content="idkchat,chat,simple,minimalistic,real-time">
+    <meta name="author" content="RuslanUC">
+    <title>IdkChat - Profile</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="/static/js/main.js"></script>
 </head>
-<body class="theme-dark">
-<main class="content content-profile grid-container">
-  <div class="username">
-    <span id="username"></span>
-  </div>
-  <div class="logout-button">
-    <button id="logout-button">Log out</button>
-  </div>
-  <div class="avatar-img">
-    <img id="avatar-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNMafj/HwAGFwLkTJBHPQAAAABJRU5ErkJggg==">
-  </div>
-  <div class="avatar-remove-button">
-    <button id="avatar-remove-button">Remove avatar</button>
-  </div>
-</main>
-<footer class="footer text-center">
-  <p>IdkChat 2022</p>
-  Support: <a href="mailto:idkchat@pepega.ml">idkchat@pepega.ml</a>
-</footer>
+<body class="bg-dark">
+<nav class="d-flex justify-content-between flex-wrap p-3">
+    <a class="h4 text-decoration-none text-white" href="/profile">Profile</a>
+    <div class="dropdown">
+        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="{% if user.avatar %} {{ user.avatar.url }} {% else %} /static/img/no-avatar.png {% endif %}" alt="User avatar" width="32" height="32" class="rounded-circle me-2" id="navUserAvatar">
+            <strong>{{ user.login }}</strong>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+            <li><a class="dropdown-item" href="/settings">Settings</a></li>
+            <li><a class="dropdown-item" href="/profile">Profile</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" onclick="logout();">Sign out</a></li>
+        </ul>
+    </div>
+</nav>
 
+<hr style="border-color: white; margin-top: 0">
+
+<main class="px-4 px-sm-5 py-2 text-white">
+    <div>
+        <div id="profileAlertContainer"></div>
+        <h4>Update avatar</h4>
+        <img src="{% if user.avatar %} {{ user.avatar.url }} {% else %} /static/img/no-avatar.png {% endif %}" id="avatarImage" class="rounded d-block" style="cursor: pointer;" height="128" width="128" alt="Avatar image">
+        <button type="button" class="btn btn-danger mt-2" onclick="uploadAvatar(null);">Remove avatar</button>
+    </div>
+</main>
+
+<script src="/static/js/bootstrap.bundle.min.js"></script>
 <script src="/static/js/profile.js"></script>
 </body>
 </html>

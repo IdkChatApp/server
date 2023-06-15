@@ -4,6 +4,7 @@ from time import time
 from django.conf import settings
 from django.core.validators import MinLengthValidator
 from django.db import models
+from django.db.models.fields.files import ImageFieldFile
 
 from .utils import JWT
 
@@ -38,7 +39,7 @@ class User(BaseModel):
     verifier: str = models.TextField(max_length=4096)
     privKey: str = models.TextField(max_length=4096)
     pubKey: str = models.TextField(max_length=2048)
-    avatar: str = models.ImageField(null=True, upload_to="avatars")
+    avatar: ImageFieldFile = models.ImageField(null=True, upload_to="avatars")
 
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, login={self.login!r})"

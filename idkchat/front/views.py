@@ -24,5 +24,8 @@ def dialogs_page(request: HttpRequest, session: Session) -> HttpResponse:
     })
 
 
-def profile_page(request: HttpRequest) -> HttpResponse:
-    return render(request, "profile.html")
+@require_auth
+def profile_page(request: HttpRequest, session: Session) -> HttpResponse:
+    return render(request, "profile.html", context={
+        "user": session.user,
+    })

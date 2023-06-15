@@ -1,7 +1,12 @@
 from typing import Optional
 
+from PIL.Image import Image
+from django.core.files.images import get_image_dimensions
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.validators import RegexValidator
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
 
 from .models import User, Dialog, Message, ReadState
@@ -47,6 +52,20 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("id", "login", "username", "pubKey", "avatar",)
+
+
+def userAvatarValidator(value: Optional[SimpleUploadedFile]) -> Optional[SimpleUploadedFile]:
+    if value is None:
+        return value
+    if value.size > 4 * 1024 * 124:
+        raise ValidationError("You cannot upload avatar more than 4mb")
+    if any(s > 1024 for s in get_image_dimensions(value)):
+        raise ValidationError("You cannot upload avatar more than 1024x1024 pixels")
+    return value
+
+
+class UserPatchSerializer(serializers.Serializer):
+    avatar = Base64ImageField(allow_null=True, validators=[userAvatarValidator])
 
 
 class DialogSerializer(serializers.ModelSerializer): # TODO: Add `recipients` field instead of sending other user in `user` field

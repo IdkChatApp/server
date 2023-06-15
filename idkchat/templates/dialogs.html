@@ -20,7 +20,7 @@
   <div class="row h-100">
     <div class="d-flex d-sm-flex flex-column p-3 text-bg-dark col-sm-3 col-12 h-100" id="sidebar">
       <div class="d-flex justify-content-between">
-        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+        <a href="/dialogs" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
             <span class="fs-4">Dialogs</span>
         </a>
         <button type="button" class="btn-close btn-close-white d-sm-none d-block" onclick="hideSidebar();"></button>
@@ -31,7 +31,7 @@
           {% with dialog|other_user:user as other_user %}
             <li class="nav-item w-100" id="dialog-id-{{ dialog.id }}">
               <a href="#" class="d-flex align-items-center text-white text-decoration-none nav-link" onclick="selectDialog({{ dialog.id }});">
-                <img src="{{ other_user.avatar|default:"/static/img/no-avatar.png" }}" alt="User avatar" width="32" height="32" class="rounded-circle me-2">
+                <img src="{% if other_user.avatar %} {{ other_user.avatar.url }} {% else %} /static/img/no-avatar.png {% endif %}" alt="User avatar" width="32" height="32" class="rounded-circle me-2">
                 <p class="text-truncate" title="{{ other_user.login }}"><b>{{ other_user.login }}</b></p>
               </a>
             </li>
@@ -41,7 +41,7 @@
       <hr>
       <div class="dropdown">
         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-          <img src="{{ user.avatar|default:"/static/img/no-avatar.png" }}" alt="User avatar" width="32" height="32" class="rounded-circle me-2">
+          <img src="{% if user.avatar %} {{ user.avatar.url }} {% else %} /static/img/no-avatar.png {% endif %}" alt="User avatar" width="32" height="32" class="rounded-circle me-2">
           <strong>{{ user.login }}</strong>
         </a>
         <ul class="dropdown-menu dropdown-menu-dark text-small shadow">

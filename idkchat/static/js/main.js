@@ -34,10 +34,9 @@ if (document.readyState === "loading") {
     });
 }
 
-function avatarUrl(user_id, avatar_hash) {
-    if(!avatar_hash) return DEFAULT_AVATAR;
-    let ext = avatar_hash.startsWith("a_") ? "gif" : "png";
-    return `${CDN}/avatars/${user_id}/${avatar_hash}.${ext}?${window.AVATAR_QUERY}`;
+function avatarUrl(avatar) {
+    if(!avatar) return DEFAULT_AVATAR;
+    return avatar;
 }
 
 function sortedIndex(array, value) {
