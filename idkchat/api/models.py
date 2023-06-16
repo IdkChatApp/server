@@ -1,5 +1,6 @@
 from os import urandom
 from time import time
+from typing import Optional
 
 from django.conf import settings
 from django.core.validators import MinLengthValidator
@@ -87,6 +88,18 @@ class Dialog(BaseModel):
 
     def other_user(self, current_user: User) -> User:
         return self.user_1 if self.user_2 == current_user else self.user_2
+
+    def unread_count(self, current_user: User, context: dict=None) -> int:
+        if context is None: context = {}
+        read_state = context.get("read_state") or \
+                     ReadState.objects.filter(dialog__id=self.id, user__id=current_user.id).first()
+        if not read_state:
+            return 1
+
+        unread_count = Message.objects.filter(id__gt=read_state.message_id, dialog__id=self.id).count()
+        if unread_count > 100: unread_count = 100
+
+        return unread_count
 
     def __repr__(self) -> str:
         return f"Dialog(id={self.id!r}, user_1.id={self.user_1.id!r}, user_2.id={self.user_2.id!r})"

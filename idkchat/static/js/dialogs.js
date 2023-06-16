@@ -7,6 +7,7 @@ const selDialogContainer = document.getElementById("selDialogContainer");
 const actualDialogContainer = document.getElementById("actualDialogContainer");
 const newDialogModal = document.getElementById("newDialogModal");
 const sidebar = document.getElementById("sidebar");
+const content = document.getElementById("content");
 const crypt = new OpenCrypto();
 
 t = localStorage.getItem("token");
@@ -35,8 +36,8 @@ class User {
     }
 
     update(obj) {
-        this.username = obj["username"];
-        this.avatar = obj["avatar"];
+        this.username = obj["username"] || this.username;
+        this.avatar = obj["avatar"] || this.avatar;
     }
 
     async encryptKey(key) {
@@ -55,11 +56,11 @@ class User {
 }
 
 class Dialog {
-    constructor(id, key, user, new_messages) {
+    constructor(id, key, user, unread_count) {
         this.id = id;
         this._key = key;
         this.user = user;
-        this.new_messages = new_messages;
+        this.unread_count = unread_count;
         this.associatedObj = null;
         this.key = null;
         this.messages = {};
@@ -85,14 +86,29 @@ class Dialog {
     }
 
     update(obj) {
-        this.new_messages = obj["new_messages"];
+        this.unread_count = obj["unread_count"];
         this.user.update(obj["user"]);
+
+        if(this.associatedObj === null) return;
+        let av = this.associatedObj.getElementsByClassName("user-avatar");
+        let lg = this.associatedObj.getElementsByClassName("user-login");
+        let uc = this.associatedObj.getElementsByClassName("unread-count");
+
+        if(av) av[0].src = avatarUrl(this.user.avatar);
+        if(lg) lg[0].innerHTML = `<b>${this.user.username}</b>`;
+        if(uc) {
+            uc = uc[0];
+            if(this.unread_count > 0 && uc.classList.contains("d-none")) uc.classList.remove("d-none");
+            if(this.unread_count <= 0 && !uc.classList.contains("d-none")) uc.classList.add("d-none");
+
+            uc.innerText = this.unread_count > 99 ? "99+" : this.unread_count.toString();
+        }
     }
 
     static new(obj) {
         if(obj instanceof Dialog) return obj;
         if(!(obj["id"] in DIALOGS))
-            DIALOGS[obj["id"]] = new this(obj["id"], obj["key"], User.new(obj["user"]), obj["new_messages"]);
+            DIALOGS[obj["id"]] = new this(obj["id"], obj["key"], User.new(obj["user"]), obj["unread_count"]);
         return DIALOGS[obj["id"]];
     }
 }
@@ -147,20 +163,29 @@ class Message {
 
 async function addDialog(dialog) {
     let dialog_id = dialog["id"];
-    let user = dialog["user"];
-
     if(!(dialog_id in DIALOGS)) DIALOGS[dialog_id] = Dialog.new(dialog);
     DIALOGS[dialog_id].update(dialog);
+    dialog = DIALOGS[dialog_id];
+    let user = dialog.user;
+
 
     let dialog_el = document.getElementById(`dialog-id-${dialog_id}`);
     if(dialog_el === null) {
         dialog_el = document.createElement("li");
         dialogs.appendChild(dialog_el);
+        let unread_badge = `
+        <span class="badge rounded-pill bg-danger unread-count${dialog.unread_count > 0 ? " d-none" : ""}">
+          ${dialog.unread_count > 99 ? "99+": dialog.unread_count}
+        </span>
+        `;
         dialog_el.outerHTML = `
         <li class="nav-item w-100" id="dialog-id-${dialog_id}">
           <a href="#" class="d-flex align-items-center text-white text-decoration-none nav-link" onclick="selectDialog(${dialog_id});">
-            <img src="${avatarUrl(user["avatar"])}" alt="User avatar" width="32" height="32" class="rounded-circle me-2">
-            <p class="text-truncate" title="${user["username"]}"><b>${user["username"]}</b></p>
+            <div class="avatar-container">
+              <img src="${avatarUrl(user.avatar)}" alt="User avatar" width="32" height="32" class="rounded-circle me-2 user-avatar">
+              ${unread_badge}
+            </div>
+            <p class="text-truncate user-login" title="${user.username}"><b>${user.username}</b></p>
           </a>
         </li>
         `;
@@ -309,7 +334,7 @@ async function selectDialog(dialog_id) {
     hideSidebar();
     await fetchMessages(dialog_id);
 
-    if(DIALOGS[dialog_id].new_messages) {
+    if(DIALOGS[dialog_id].unread_count > 0) {
         window._WS.send(JSON.stringify({
             "op": 2,
             "d": {
@@ -463,11 +488,17 @@ function hideSidebar() {
         sidebar.classList.add("d-none");
         sidebar.classList.remove("d-flex");
     }
+    if(content.classList.contains("d-none")) {
+        content.classList.remove("d-none");
+    }
 }
 
 function showSidebar() {
     if(sidebar.classList.contains("d-none")) {
         sidebar.classList.add("d-flex");
         sidebar.classList.remove("d-none");
+    }
+    if(!content.classList.contains("d-none")) {
+        content.classList.add("d-none");
     }
 }

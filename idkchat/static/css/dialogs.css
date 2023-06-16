@@ -1,7 +1,10 @@
+html, body {
+    height: 100%;
+}
+
 .text-bg-title {
     color: #fff!important;
-    background-color: RGBA(43, 47, 51, var(--bs-bg-opacity, 1));
-!important
+    background-color: RGBA(43, 47, 51, var(--bs-bg-opacity, 1));!important
 }
 
 .message-time {
@@ -39,4 +42,22 @@
     border-radius: 20px;
     padding: 7px;
     user-select: none;
+}
+
+.avatar-container {
+    display: inline-block;
+    position: relative;
+}
+
+.unread-count {
+    font-size: xx-small!important;
+    top: -15%;
+    right: 10%;
+    animation: fade 0.25s linear;
+    position: absolute;
+}
+
+@keyframes fade {
+    0% { opacity: 0 }
+    50% { opacity: 1 }
 }

@@ -192,7 +192,7 @@ class MessagesView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        message = Message.objects.create(dialog=dialog, author=request.user, content=serializer.data["content"])
+        message = Message.objects.create(dialog=dialog, author=user, content=serializer.data["content"])
 
         read_state: ReadState = ReadState.objects.filter(user__id=user.id, dialog__id=dialog.id).first() or \
                                 ReadState.objects.create(user=user, dialog=dialog, message_id=message.id)
@@ -212,7 +212,7 @@ class MessagesView(APIView):
                 }
             )
 
-        return Response(MessageSerializer(message, context={"current_user": request.user}).data)
+        return Response(MessageSerializer(message, context={"current_user": user}).data)
 
 
 class UsersMeView(APIView):

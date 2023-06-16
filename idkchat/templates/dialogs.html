@@ -15,7 +15,7 @@
     <script src="/static/js/main.js"></script>
     <script src="/static/js/OpenCrypto.min.js"></script>
 </head>
-<body class="vh-100">
+<body>
 <div class="container-fluid h-100">
   <div class="row h-100">
     <div class="d-flex d-sm-flex flex-column p-3 text-bg-dark col-sm-3 col-12 h-100" id="sidebar">
@@ -31,8 +31,13 @@
           {% with dialog|other_user:user as other_user %}
             <li class="nav-item w-100" id="dialog-id-{{ dialog.id }}">
               <a href="#" class="d-flex align-items-center text-white text-decoration-none nav-link" onclick="selectDialog({{ dialog.id }});">
-                <img src="{% if other_user.avatar %} {{ other_user.avatar.url }} {% else %} /static/img/no-avatar.png {% endif %}" alt="User avatar" width="32" height="32" class="rounded-circle me-2">
-                <p class="text-truncate" title="{{ other_user.login }}"><b>{{ other_user.login }}</b></p>
+                <div class="avatar-container">
+                  <img src="{% if other_user.avatar %} {{ other_user.avatar.url }} {% else %} /static/img/no-avatar.png {% endif %}" alt="User avatar" width="32" height="32" class="rounded-circle me-2 user-avatar">
+                  <span class="badge rounded-pill bg-danger unread-count{% if dialog|unread_count:user <= 0 %} d-none{% endif %}">
+                    {% if dialog|unread_count:user > 99 %}99+{% else %}{{ dialog|unread_count:user }}{% endif %}
+                  </span>
+                </div>
+                <p class="text-truncate user-login" title="{{ other_user.login }}"><b>{{ other_user.login }}</b></p>
               </a>
             </li>
           {% endwith %}
@@ -54,9 +59,9 @@
       </div>
     </div>
 
-    <div class="vr px-0"></div>
+    <div class="vr px-0 d-none d-sm-block"></div>
 
-    <div class="col text-bg-dark">
+    <div class="col text-bg-dark d-none d-sm-block" id="content">
       <div class="d-flex justify-content-center align-items-center h-100" id="selDialogContainer">
         <a class="choose-dialog-label text-decoration-none" style="color: white;" onclick="showSidebar();"><- SELECT OR CREATE DIALOG</a>
       </div>

@@ -71,7 +71,7 @@ class UserPatchSerializer(serializers.Serializer):
 class DialogSerializer(serializers.ModelSerializer): # TODO: Add `recipients` field instead of sending other user in `user` field
     user = serializers.SerializerMethodField("_other_user")
     key = serializers.SerializerMethodField("_key")
-    new_messages = serializers.SerializerMethodField("_new_messages")
+    unread_count = serializers.SerializerMethodField("_unread_count")
 
     def _other_user(self, obj: Dialog) -> Optional[dict]:
         current_user: Optional[User] = self.context.get("current_user")
@@ -79,21 +79,17 @@ class DialogSerializer(serializers.ModelSerializer): # TODO: Add `recipients` fi
             return None
         return UserSerializer(obj.other_user(current_user)).data
 
-    def _new_messages(self, obj: Dialog) -> bool:
+    def _unread_count(self, obj: Dialog) -> int:
+        if (unread := self.context.get("unread_count")) is not None:
+            return unread
+
         current_user: Optional[User] = self.context.get("current_user")
         if not current_user:
-            return True
-        read_state = self.context.get("read_state") or \
-                     ReadState.objects.filter(dialog__id=self.instance.id, user__id=current_user.id).first()
-        if not read_state:
-            return True
-        last_message_id = self.context.get("last_message_id")
-        if last_message_id is None:
-            last_message_id = 0
-            last_message = Message.objects.filter(dialog__id=self.instance.id).order_by("-id").first()
-            if last_message is not None:
-                last_message_id = last_message.id
-        return last_message_id > read_state.message_id
+            return 1
+
+        unread_count = obj.unread_count(current_user, self.context)
+
+        return unread_count
 
     def _key(self, obj: Dialog) -> Optional[str]:
         current_user: Optional[User] = self.context.get("current_user")
@@ -102,7 +98,7 @@ class DialogSerializer(serializers.ModelSerializer): # TODO: Add `recipients` fi
 
     class Meta:
         model = Dialog
-        fields = ("id", "user", "key", "new_messages",)
+        fields = ("id", "user", "key", "unread_count",)
 
 
 class DialogCreateSerializer(serializers.Serializer):

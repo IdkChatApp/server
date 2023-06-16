@@ -37,20 +37,23 @@ class IdkConsumer(AsyncJsonWebsocketConsumer):
         if "dialog_id" not in data: return await self.close(4000)
         dialog = await Dialog.objects.aget(Q(id=data["dialog_id"]) & (Q(user_1__id=self.user.id) | Q(user_2__id=self.user.id)))
         last_message = await Message.objects.filter(dialog__id=dialog.id).order_by("-id").afirst()
-        read_state: ReadState = await ReadState.objects.filter(user__id=self.user.id, dialog__id=dialog.id).afirst()
+
+        read_state: ReadState = await ReadState.objects.filter(user__id=self.user.id, dialog__id=dialog.id).afirst() or \
+                                await ReadState.objects.acreate(user=self.user, dialog=dialog)
+
         last_message_id = last_message.id if last_message else 0
-        if read_state is None:
-            read_state: ReadState = await ReadState.objects.acreate(user=self.user, dialog=dialog, message_id=last_message_id)
         read_state.message_id = last_message_id
         await read_state.asave()
 
         await sync_to_async(lambda: dialog.user_1)()
         await sync_to_async(lambda: dialog.user_2)()
 
+        unread = await Message.objects.filter(id__gt=last_message_id).acount()
+
         await self.send_json({
             "op": WS_OP.DIALOG_UPDATE,
             "d": DialogSerializer(dialog, context={"current_user": self.user, "read_state": read_state,
-                                                   "last_message_id": last_message_id}).data
+                                                   "last_message_id": last_message_id, "unread_count": unread}).data
         })
 
     async def disconnect(self, code):
