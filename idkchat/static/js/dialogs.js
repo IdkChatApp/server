@@ -8,6 +8,8 @@ const actualDialogContainer = document.getElementById("actualDialogContainer");
 const newDialogModal = document.getElementById("newDialogModal");
 const sidebar = document.getElementById("sidebar");
 const content = document.getElementById("content");
+const loadingContainer = document.getElementById("loadingContainer");
+const mainContainer = document.getElementById("mainContainer");
 const crypt = new OpenCrypto();
 
 t = localStorage.getItem("token");
@@ -433,6 +435,15 @@ window.WS_HANDLERS = {
     3: _ws_handle_dialog_update
 }
 
+async function _reconnectFunc() {
+    try {
+        await fetchDialogs();
+    } catch {
+        setTimeout(_reconnectFunc, 2500);
+    }
+    initWs();
+}
+
 function initWs() {
     let ws = window._WS = new WebSocket(window.WS_ENDPOINT);
 
@@ -443,6 +454,7 @@ function initWs() {
                 "token": localStorage.getItem("token")
             }
         }));
+        hideLoading();
     });
 
     ws.addEventListener("message", (event) => {
@@ -458,16 +470,16 @@ function initWs() {
             location.href = "/auth";
             return;
         }
-        setTimeout(() => {
-            fetchDialogs().then();
-            initWs();
-        }, 1000);
+        showLoading();
+        setTimeout(_reconnectFunc, 1000);
     });
 }
 
 async function initPubKey() {
     window.PUBKEY = await crypt.pemPublicToCrypto(window.PUBKEY, { name: 'RSA-OAEP' });
 }
+
+
 
 if (document.readyState !== 'loading') {
     initPubKey().then(() => {
@@ -500,5 +512,27 @@ function showSidebar() {
     }
     if(!content.classList.contains("d-none")) {
         content.classList.add("d-none");
+    }
+}
+
+function showLoading() {
+    if(loadingContainer.classList.contains("d-none")) {
+        loadingContainer.classList.add("d-flex");
+        loadingContainer.classList.remove("d-none");
+    }
+    if(mainContainer.classList.contains("d-block")) {
+        mainContainer.classList.add("d-none");
+        mainContainer.classList.remove("d-block");
+    }
+}
+
+function hideLoading() {
+    if(loadingContainer.classList.contains("d-flex")) {
+        loadingContainer.classList.add("d-none");
+        loadingContainer.classList.remove("d-flex");
+    }
+    if(mainContainer.classList.contains("d-none")) {
+        mainContainer.classList.add("d-block");
+        mainContainer.classList.remove("d-none");
     }
 }

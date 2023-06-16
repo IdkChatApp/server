@@ -16,7 +16,17 @@
     <script src="/static/js/OpenCrypto.min.js"></script>
 </head>
 <body>
-<div class="container-fluid h-100">
+
+<div class="h-100 w-100 d-flex flex-column justify-content-center align-items-center bg-dark text-white" id="loadingContainer">
+  <div class="row">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+  <div class="row">
+    <div class="mt-2" style="user-select: none;"><strong>Loading... Please wait...</strong></div>
+  </div>
+</div>
+
+<div class="container-fluid h-100 d-none" id="mainContainer">
   <div class="row h-100">
     <div class="d-flex d-sm-flex flex-column p-3 text-bg-dark col-sm-3 col-12 h-100" id="sidebar">
       <div class="d-flex justify-content-between">
