@@ -26,16 +26,6 @@ function showForm(form) {
     authTitle.innerText = form.charAt(0).toUpperCase() + form.slice(1);
 }
 
-async function hashPassword(salt, password) {
-    let h = concatUint8Arrays(salt.toUint8Array(), new TextEncoder().encode(password));
-    for(let i = 0; i < 64; i++) {
-        const hashBuffer = await window.crypto.subtle.digest("SHA-384", h);
-        h = new Uint8Array(hashBuffer);
-    }
-    const hashArray = Array.from(new Uint8Array(h));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
 async function login() {
     lLoginInput.value = lLoginInput.value.trim();
     lPasswordInput.value = lPasswordInput.value.trim();

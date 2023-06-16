@@ -3,6 +3,7 @@ from typing import Optional
 
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.db.models import Q
 
@@ -50,11 +51,15 @@ class IdkConsumer(AsyncJsonWebsocketConsumer):
 
         unread = await Message.objects.filter(id__gt=last_message_id).acount()
 
-        await self.send_json({
-            "op": WS_OP.DIALOG_UPDATE,
-            "d": DialogSerializer(dialog, context={"current_user": self.user, "read_state": read_state,
+        await get_channel_layer().group_send(
+            f"user_{self.user.id}",
+            {
+                "type": "chat_event",
+                "op": WS_OP.DIALOG_UPDATE,
+                "data": DialogSerializer(dialog, context={"current_user": self.user, "read_state": read_state,
                                                    "last_message_id": last_message_id, "unread_count": unread}).data
-        })
+            }
+        )
 
     async def disconnect(self, code):
         self.closed = True
@@ -66,10 +71,9 @@ class IdkConsumer(AsyncJsonWebsocketConsumer):
                 or "d" not in content or not isinstance(content["d"], dict):
             return await self.close(4000)
         op = content["op"]
-        if op != 0 and self.user is None:
-            return await self.close(4001)
-        elif op == 0 and self.user is not None:
-            return await self.close(4000)
+        if op < 0: return await self.close(4000)
+        if op != 0 and self.user is None: return await self.close(4001)
+        elif op == 0 and self.user is not None: return await self.close(4000)
 
         if (handle_func := getattr(self, f"handle_{op}", None)) is None:
             return await self.close(4000)
@@ -82,3 +86,7 @@ class IdkConsumer(AsyncJsonWebsocketConsumer):
 
     async def chat_event(self, event):
         await self.send_json({"op": event["op"], "d": event["data"]})
+
+    async def user_event(self, event):
+        if event["op"] == WS_OP.SESSION_TERM:
+            return await self.close(4001)

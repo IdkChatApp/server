@@ -122,3 +122,13 @@ function logout() {
     localStorage.removeItem("encPrivKey");
     location.href = "/auth";
 }
+
+async function hashPassword(salt, password) {
+    let h = concatUint8Arrays(salt.toUint8Array(), new TextEncoder().encode(password));
+    for(let i = 0; i < 64; i++) {
+        const hashBuffer = await window.crypto.subtle.digest("SHA-384", h);
+        h = new Uint8Array(hashBuffer);
+    }
+    const hashArray = Array.from(new Uint8Array(h));
+    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}

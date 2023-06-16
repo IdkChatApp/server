@@ -1,4 +1,6 @@
 class WS_OP:
+    SESSION_TERM = -1
+
     IDENTIFY = 0
     CREATE_MESSAGE = 1
     MARK_AS_READ = 2

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="en-US" class="h-100">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,7 +13,7 @@
     <script src="/static/js/srp_client.js"></script>
     <script src="/static/js/OpenCrypto.min.js"></script>
 </head>
-<body style="height: 100vh">
+<body class="h-100">
 
 <div class="d-flex justify-content-center align-items-center h-100">
     <div class="col-md-6 col-sm-8 col-10 card">
@@ -23,7 +23,7 @@
             <form id="loginForm" class="d-flex flex-column gap-3" onsubmit="login(); return false;">
                 <div class="form-group">
                     <label for="login_loginInput">Login</label>
-                    <input type="text" class="form-control" id="login_loginInput" placeholder="Enter login" required minlength="5" maxlength="254">
+                    <input type="text" class="form-control" id="login_loginInput" placeholder="Enter login" required minlength="5" maxlength="32">
                 </div>
                 <div class="form-group">
                     <label for="login_passwordInput">Password</label>
@@ -38,7 +38,7 @@
             <form id="signupForm" class="d-none flex-column gap-3" onsubmit="signup(); return false;">
                 <div class="form-group">
                     <label for="signup_loginInput">Login</label>
-                    <input type="text" class="form-control" id="signup_loginInput" placeholder="Enter login" required minlength="5" maxlength="254">
+                    <input type="text" class="form-control" id="signup_loginInput" placeholder="Enter login" required minlength="5" maxlength="32">
                 </div>
                 <div class="form-group">
                     <label for="signup_passwordInput">Password</label>

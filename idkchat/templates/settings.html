@@ -10,6 +10,8 @@
     <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <script src="/static/js/main.js"></script>
+    <script src="/static/js/srp_client.js"></script>
+    <script src="/static/js/OpenCrypto.min.js"></script>
 </head>
 <body class="bg-dark">
 <nav class="d-flex justify-content-between flex-wrap p-3">
@@ -48,7 +50,7 @@
             <label for="changepass_newPasswordRepeat">Repeat new password</label>
             <input type="password" class="form-control" id="changepass_newPasswordRepeat" placeholder="Enter new password" required>
         </div>
-        <button type="button" class="btn btn-primary mt-3" onclick="changePassword();">Change password</button>
+        <button type="button" class="btn btn-primary mt-3" onclick="changePassword('{{ user.login }}');">Change password</button>
     </div>
 </main>
 

@@ -1,6 +1,5 @@
 from typing import Optional
 
-from PIL.Image import Image
 from django.core.files.images import get_image_dimensions
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.validators import RegexValidator
@@ -9,18 +8,18 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.validators import UniqueTogetherValidator
 
-from .models import User, Dialog, Message, ReadState
+from .models import User, Dialog, Message
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    login: str = serializers.CharField(label="Login", required=True, min_length=5, max_length=32, validators=[
+    login = serializers.CharField(label="Login", required=True, min_length=5, max_length=32, validators=[
         RegexValidator(r'^[a-z0-9_]*$',
                        'the field must contain only lowercase letters, numbers or underscore'),
     ])
-    salt: str = serializers.CharField(label="Salt", required=True)
-    verifier: str = serializers.CharField(label="Verifier", required=True)
-    privKey: str = serializers.CharField(label="Encrypted private key", required=True)
-    pubKey: str = serializers.CharField(label="Public key", required=True)
+    salt = serializers.CharField(label="Salt", required=True)
+    verifier = serializers.CharField(label="Verifier", required=True)
+    privKey = serializers.CharField(label="Encrypted private key", required=True)
+    pubKey = serializers.CharField(label="Public key", required=True)
 
     class Meta:
         model = User
@@ -34,16 +33,26 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class LoginStartSerializer(serializers.Serializer):
-    login: str = serializers.CharField(label="Login", required=True, min_length=5, max_length=32, validators=[
+    login = serializers.CharField(label="Login", required=True, min_length=5, max_length=32, validators=[
         RegexValidator(r'^[a-z0-9_]*$',
                        'the field must contain only lowercase letters, numbers or underscore'),
     ])
 
 
-class LoginSerializer(serializers.Serializer):
-    A: str = serializers.CharField(label="Client A value", required=True)
-    M: str = serializers.CharField(label="Client M value", required=True)
+class SrpSerializer(serializers.Serializer):
+    A = serializers.CharField(label="Client A value", required=True)
+    M = serializers.CharField(label="Client M value", required=True)
     ticket = serializers.CharField(label="SRP login ticket", required=True)
+
+
+class LoginSerializer(SrpSerializer):
+    pass
+
+
+class ChangePasswordSerializer(SrpSerializer):
+    new_salt = serializers.CharField(label="Salt", required=True)
+    new_verifier = serializers.CharField(label="Verifier", required=True)
+    new_privkey = serializers.CharField(label="Private key encrypted with new key", required=True)
 
 
 class UserSerializer(serializers.ModelSerializer):
