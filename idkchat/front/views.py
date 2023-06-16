@@ -29,3 +29,10 @@ def profile_page(request: HttpRequest, session: Session) -> HttpResponse:
     return render(request, "profile.html", context={
         "user": session.user,
     })
+
+
+@require_auth
+def settings_page(request: HttpRequest, session: Session) -> HttpResponse:
+    return render(request, "settings.html", context={
+        "user": session.user,
+    })

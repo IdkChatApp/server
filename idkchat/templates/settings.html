@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="IdkChat - simple and minimalistic chat app.">
+    <meta name="keywords" content="idkchat,chat,simple,minimalistic,real-time">
+    <meta name="author" content="RuslanUC">
+    <title>IdkChat - Settings</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <script src="/static/js/main.js"></script>
+</head>
+<body class="bg-dark">
+<nav class="d-flex justify-content-between flex-wrap p-3">
+    <a class="h4 text-decoration-none text-white" href="/settings">Settings</a>
+    <div class="dropdown">
+        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="{% if user.avatar %} {{ user.avatar.url }} {% else %} /static/img/no-avatar.png {% endif %}" alt="User avatar" width="32" height="32" class="rounded-circle me-2">
+            <strong>{{ user.login }}</strong>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+            <li><a class="dropdown-item" href="/dialogs">Dialogs</a></li>
+            <li><a class="dropdown-item" href="/settings">Settings</a></li>
+            <li><a class="dropdown-item" href="/profile">Profile</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" onclick="logout();">Sign out</a></li>
+        </ul>
+    </div>
+</nav>
+
+<hr style="border-color: white; margin-top: 0">
+
+<main class="px-4 px-sm-5 py-2 text-white">
+    <h1 class="h2">Settings</h1>
+    <div id="settingsAlertContainer"></div>
+    <div>
+        <h4>Change password</h4>
+        <div class="form-group">
+            <label for="changepass_oldPassword">Old password</label>
+            <input type="password" class="form-control" id="changepass_oldPassword" placeholder="Enter old password" required>
+        </div>
+        <div class="form-group">
+            <label for="changepass_newPassword">New password</label>
+            <input type="password" class="form-control" id="changepass_newPassword" placeholder="Enter new password" required>
+        </div>
+        <div class="form-group">
+            <label for="changepass_newPasswordRepeat">Repeat new password</label>
+            <input type="password" class="form-control" id="changepass_newPasswordRepeat" placeholder="Enter new password" required>
+        </div>
+        <button type="button" class="btn btn-primary mt-3" onclick="changePassword();">Change password</button>
+    </div>
+</main>
+
+<script src="/static/js/bootstrap.bundle.min.js"></script>
+<script src="/static/js/settings.js"></script>
+</body>
+</html>
