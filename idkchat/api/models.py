@@ -125,7 +125,7 @@ class Message(BaseModel):
 class ReadState(BaseModel):
     dialog: Dialog = models.ForeignKey(Dialog, on_delete=models.CASCADE)
     user: User = models.ForeignKey(User, on_delete=models.CASCADE)
-    message_id: int = models.BigIntegerField()
+    message_id: int = models.BigIntegerField(default=0)
 
     def __repr__(self) -> str:
         return f"ReadState(user.id={self.user.id!r}, dialog.id={self.dialog.id!r}, message_id={self.message_id!r})"
