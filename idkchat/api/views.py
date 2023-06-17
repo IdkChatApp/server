@@ -5,7 +5,6 @@ from uuid import uuid4
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from channels_redis.core import RedisChannelLayer
 from django.conf import settings
 from django.db.models import Q
 from rest_framework import permissions, status
@@ -21,10 +20,10 @@ from .models import User, Session, PendingAuth, Dialog, Message, ReadState
 from .serializers import RegisterSerializer, LoginStartSerializer, LoginSerializer, DialogSerializer, MessageSerializer, \
     MessageCreateSerializer, DialogCreateSerializer, UserSerializer, GetUserByNameSerializer, UserPatchSerializer, \
     ChangePasswordSerializer
-from .storage import S3Storage
-from .utils import JWT, getImage
+from .utils import JWT
 
 
+# noinspection PyMethodMayBeStatic
 class LoginStartView(APIView):
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
@@ -53,6 +52,7 @@ class LoginStartView(APIView):
         return Response({"ticket": ticket, "salt": salt.hex(), "B": hex(B)})
 
 
+# noinspection PyMethodMayBeStatic
 class LoginView(APIView):
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
@@ -95,6 +95,7 @@ class LoginView(APIView):
         return Response({"token": session.toJWT(), "privKey": user.privKey, "H_AMK": hex(HAMK)})
 
 
+# noinspection PyMethodMayBeStatic
 class RegisterView(APIView):
     authentication_classes = []
     permission_classes = [permissions.AllowAny]
@@ -109,12 +110,14 @@ class RegisterView(APIView):
         return Response({"token": session.toJWT()})
 
 
+# noinspection PyMethodMayBeStatic
 class LogoutView(APIView):
     def post(self, request: Request) -> Response:
         request.auth.delete()
         return Response(status=204)
 
 
+# noinspection PyMethodMayBeStatic
 class DialogsView(APIView):
     class MinRateThrottle(UserRateThrottle):
         rate = "30/minute"
@@ -158,6 +161,7 @@ class DialogsView(APIView):
         return Response(DialogSerializer(dialog, context={"current_user": user}).data)
 
 
+# noinspection PyMethodMayBeStatic
 class MessagesView(APIView):
     class MinRateThrottle(UserRateThrottle):
         rate = "5/second"
@@ -216,6 +220,7 @@ class MessagesView(APIView):
         return Response(MessageSerializer(message, context={"current_user": user}).data)
 
 
+# noinspection PyMethodMayBeStatic
 class UsersMeView(APIView):
     def get(self, request: Request) -> Response:
         return Response(UserSerializer(request.user).data)
@@ -236,6 +241,7 @@ class UsersMeView(APIView):
         return Response(UserSerializer(user).data)
 
 
+# noinspection PyMethodMayBeStatic
 class GetUserByName(APIView):
     class MinRateThrottle(UserRateThrottle):
         rate = "30/minute"
@@ -256,6 +262,7 @@ class GetUserByName(APIView):
         return Response(UserSerializer(other_user).data)
 
 
+# noinspection PyMethodMayBeStatic
 class ChangePasswordView(APIView):
     class RateThrottle(UserRateThrottle):
         rate = "10/day"

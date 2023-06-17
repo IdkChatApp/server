@@ -1,3 +1,4 @@
+from __future__ import annotations
 from os import urandom
 from time import time
 from typing import Optional
@@ -100,6 +101,9 @@ class Dialog(BaseModel):
         if unread_count > 100: unread_count = 100
 
         return unread_count
+
+    def last_message(self) -> Optional[Message]:
+        return Message.objects.filter(dialog=self).order_by("-id").first()
 
     def __repr__(self) -> str:
         return f"Dialog(id={self.id!r}, user_1.id={self.user_1.id!r}, user_2.id={self.user_2.id!r})"

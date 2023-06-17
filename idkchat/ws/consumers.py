@@ -57,7 +57,7 @@ class IdkConsumer(AsyncJsonWebsocketConsumer):
                 "type": "chat_event",
                 "op": WS_OP.DIALOG_UPDATE,
                 "data": DialogSerializer(dialog, context={"current_user": self.user, "read_state": read_state,
-                                                   "last_message_id": last_message_id, "unread_count": unread}).data
+                                                   "last_message": last_message, "unread_count": unread}).data
             }
         )
 
@@ -66,7 +66,7 @@ class IdkConsumer(AsyncJsonWebsocketConsumer):
         if self.user is not None:
             await self.channel_layer.group_discard(f"user_{self.user.id}", self.channel_name)
 
-    async def receive_json(self, content: dict):
+    async def receive_json(self, content: dict, **kwargs):
         if "op" not in content or not isinstance(content["op"], int) \
                 or "d" not in content or not isinstance(content["d"], dict):
             return await self.close(4000)

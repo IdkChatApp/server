@@ -32,6 +32,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         ]
 
 
+# noinspection PyAbstractClass
 class LoginStartSerializer(serializers.Serializer):
     login = serializers.CharField(label="Login", required=True, min_length=5, max_length=32, validators=[
         RegexValidator(r'^[a-z0-9_]*$',
@@ -39,16 +40,19 @@ class LoginStartSerializer(serializers.Serializer):
     ])
 
 
+# noinspection PyAbstractClass
 class SrpSerializer(serializers.Serializer):
     A = serializers.CharField(label="Client A value", required=True)
     M = serializers.CharField(label="Client M value", required=True)
     ticket = serializers.CharField(label="SRP login ticket", required=True)
 
 
+# noinspection PyAbstractClass
 class LoginSerializer(SrpSerializer):
     pass
 
 
+# noinspection PyAbstractClass
 class ChangePasswordSerializer(SrpSerializer):
     new_salt = serializers.CharField(label="Salt", required=True)
     new_verifier = serializers.CharField(label="Verifier", required=True)
@@ -73,6 +77,7 @@ def userAvatarValidator(value: Optional[SimpleUploadedFile]) -> Optional[SimpleU
     return value
 
 
+# noinspection PyAbstractClass
 class UserPatchSerializer(serializers.Serializer):
     avatar = Base64ImageField(allow_null=True, validators=[userAvatarValidator])
 
@@ -81,6 +86,7 @@ class DialogSerializer(serializers.ModelSerializer): # TODO: Add `recipients` fi
     user = serializers.SerializerMethodField("_other_user")
     key = serializers.SerializerMethodField("_key")
     unread_count = serializers.SerializerMethodField("_unread_count")
+    last_message = serializers.SerializerMethodField("_last_message")
 
     def _other_user(self, obj: Dialog) -> Optional[dict]:
         current_user: Optional[User] = self.context.get("current_user")
@@ -105,11 +111,17 @@ class DialogSerializer(serializers.ModelSerializer): # TODO: Add `recipients` fi
         if not current_user: return
         return obj.key_1 if obj.user_1 == current_user else obj.key_2
 
+    def _last_message(self, obj: Dialog) -> Optional[dict]:
+        last_message: Optional[Message] = self.context.get("last_message")
+        if not last_message: last_message = obj.last_message()
+        if last_message is not None: return MessageSerializer(last_message).data
+
     class Meta:
         model = Dialog
-        fields = ("id", "user", "key", "unread_count",)
+        fields = ("id", "user", "key", "unread_count", "last_message",)
 
 
+# noinspection PyAbstractClass
 class DialogCreateSerializer(serializers.Serializer):
     username: str = serializers.CharField(label="Login", required=True, min_length=5, max_length=32, validators=[
         RegexValidator(r'^[a-z0-9_]*$',
@@ -124,10 +136,12 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = ("id", "content", "created_at", "author",)
 
 
+# noinspection PyAbstractClass
 class MessageCreateSerializer(serializers.Serializer):
     content: str = serializers.CharField(label="Message content", required=True, min_length=1, max_length=4096)
 
 
+# noinspection PyAbstractClass
 class GetUserByNameSerializer(serializers.Serializer):
     username: str = serializers.CharField(label="Login", required=True, min_length=5, max_length=32, validators=[
         RegexValidator(r'^[a-z0-9_]*$',

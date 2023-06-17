@@ -1,11 +1,10 @@
 from base64 import b64decode as _b64decode, b64encode as _b64encode
 from hashlib import sha512
 from hmac import new
-from io import BytesIO
 from json import loads, dumps
 from time import time
 from typing import Optional, Union
-from magic import from_buffer
+
 
 def b64decode(data: Union[str, bytes]) -> bytes:
     if isinstance(data, str):
@@ -65,27 +64,3 @@ class JWT:
         signature = b64encode(signature)
 
         return f"{header}.{payload}.{signature}"
-
-
-def getImage(image: Union[str, bytes, BytesIO]) -> Optional[BytesIO]:
-    if isinstance(image, bytes):
-        image = BytesIO(image)
-    elif isinstance(image, str) and image.startswith("data:image/") and "base64" in image.split(",")[0]:
-        image = BytesIO(_b64decode(image.split(",")[1].encode("utf8")))
-    elif not isinstance(image, BytesIO):
-        return  # Unknown type
-    if not validImage(image):
-        return
-    image.seek(0)
-    return image
-
-
-def imageType(image: BytesIO) -> str:
-    image.seek(0)
-    m = from_buffer(image.read(1024), mime=True)
-    if m.startswith("image/"):
-        return m[6:]
-
-
-def validImage(image: BytesIO) -> bool:
-    return imageType(image) in ["png", "webp", "gif", "jpeg", "jpg"] and image.getbuffer().nbytes < 1 * 1024 * 1024

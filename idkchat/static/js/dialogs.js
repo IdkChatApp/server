@@ -35,7 +35,7 @@ class User {
         this.pubKey = null;
     }
 
-    update(obj) {
+    async update(obj) {
         this.username = obj["username"] || this.username;
         this.avatar = obj["avatar"] || this.avatar;
     }
@@ -64,6 +64,7 @@ class Dialog {
         this.associatedObj = null;
         this.key = null;
         this.messages = {};
+        this._last_message = null;
 
         if(!(user.id in USERS)) USERS[user.id] = user;
     }
@@ -85,14 +86,27 @@ class Dialog {
         return new TextDecoder("utf-8").decode(buffer);
     }
 
-    update(obj) {
-        this.unread_count = obj["unread_count"];
-        this.user.update(obj["user"]);
+    async addMessage(message) {
+        if(!(message instanceof Message)) message = Message.new(message);
+        if(message.id in this.messages) return;
+
+        this.messages[message.id] = message;
+        if(this._last_message === null || message.created_at > this._last_message.created_at) {
+            this._last_message = message;
+            await this.update({});
+        }
+    }
+
+    async update(obj) {
+        this._last_message = Message.new(obj["last_message"], this) || this._last_message;
+        this.unread_count = typeof(obj["unread_count"]) === "number" ? obj["unread_count"] : this.unread_count;
+        await this.user.update(obj["user"]);
 
         if(this.associatedObj === null) return;
         let av = this.associatedObj.getElementsByClassName("user-avatar");
         let lg = this.associatedObj.getElementsByClassName("user-login");
         let uc = this.associatedObj.getElementsByClassName("unread-count");
+        let mp = this.associatedObj.getElementsByClassName("message-text-preview");
 
         if(av) av[0].src = avatarUrl(this.user.avatar);
         if(lg) lg[0].innerHTML = `<b>${this.user.username}</b>`;
@@ -103,12 +117,17 @@ class Dialog {
 
             uc.innerText = this.unread_count > 99 ? "99+" : this.unread_count.toString();
         }
+        if(mp && this._last_message !== null) {
+            mp = mp[0];
+            mp.innerText = (this._last_message.author_id === USER_ID ? "You: " : "") + await this._last_message.text;
+        }
     }
 
     static new(obj) {
         if(obj instanceof Dialog) return obj;
         if(!(obj["id"] in DIALOGS))
             DIALOGS[obj["id"]] = new this(obj["id"], obj["key"], User.new(obj["user"]), obj["unread_count"]);
+        DIALOGS[obj["id"]]._last_message = Message.new(obj["last_message"]);
         return DIALOGS[obj["id"]];
     }
 }
@@ -128,9 +147,8 @@ class Message {
     get text() {
         let that = this;
         return (async () => {
-            if(that._text === null) {
+            if(that._text === null)
                 that._text = await that.dialog.decrypt(that.content);
-            }
             return that._text;
         })();
     }
@@ -153,6 +171,7 @@ class Message {
     }
 
     static new(obj, dialog) {
+        if(!obj || ! dialog) return;
         if(obj instanceof Message) return obj;
         dialog = Dialog.new(dialog);
         if(!(obj["id"] in dialog.messages))
@@ -162,22 +181,29 @@ class Message {
 }
 
 async function addDialog(dialog) {
-    let dialog_id = dialog["id"];
+    let dialog_id = dialog["id"], _dialog = dialog;
     if(!(dialog_id in DIALOGS)) DIALOGS[dialog_id] = Dialog.new(dialog);
-    DIALOGS[dialog_id].update(dialog);
     dialog = DIALOGS[dialog_id];
     let user = dialog.user;
-
 
     let dialog_el = document.getElementById(`dialog-id-${dialog_id}`);
     if(dialog_el === null) {
         dialog_el = document.createElement("li");
         dialogs.appendChild(dialog_el);
+
         let unread_badge = `
         <span class="badge rounded-pill bg-danger unread-count${dialog.unread_count > 0 ? " d-none" : ""}">
           ${dialog.unread_count > 99 ? "99+": dialog.unread_count}
         </span>
         `;
+
+        let message_preview = `
+        <p class="m-0 text-truncate message-text-preview">
+          ${dialog._last_message !== null && dialog._last_message.author_id === USER_ID ? "You: " : ""}
+          ${dialog._last_message !== null ? dialog._last_message.text : dialog._last_message}
+        </p>
+        `;
+
         dialog_el.outerHTML = `
         <li class="nav-item w-100" id="dialog-id-${dialog_id}">
           <a href="#" class="d-flex align-items-center text-white text-decoration-none nav-link" onclick="selectDialog(${dialog_id});">
@@ -185,23 +211,31 @@ async function addDialog(dialog) {
               <img src="${avatarUrl(user.avatar)}" alt="User avatar" width="32" height="32" class="rounded-circle me-2 user-avatar">
               ${unread_badge}
             </div>
-            <p class="text-truncate user-login" title="${user.username}"><b>${user.username}</b></p>
+            <div class="w-100 text-truncate">
+              <p class="text-truncate m-0 user-login" title="${user.username}"><b>${user.username}</b></p>
+              ${message_preview}
+            </div>
           </a>
         </li>
         `;
     }
     DIALOGS[dialog_id].associatedObj = dialog_el;
+    await DIALOGS[dialog_id].update(_dialog);
 }
 
 function clearMessages() {
     messages.innerHTML = "";
 }
 
+function escapeHtml(str) {
+    return str.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+}
+
 async function addMessage(dialog_id, message) {
     let message_id = message["id"];
     let dialog = DIALOGS[dialog_id];
     if(!(message_id in dialog.messages))
-        dialog.messages[message_id] = Message.new(message, dialog);
+        await dialog.addMessage(Message.new(message, dialog));
     message = dialog.messages[message_id];
 
     if(window.CURRENT_DIALOG !== dialog_id)
@@ -226,7 +260,7 @@ async function addMessage(dialog_id, message) {
     <li class="message ${message.author_id === USER_ID ? "my-message" : ""}" id="message-id-${message_id}">
       <div>
         <span class="message-time">[${message.date}]</span>
-        <span class="message-text">${await message.text}</span>
+        <span class="message-text">${escapeHtml(await message.text)}</span>
       </div>
     </li>
     `;
@@ -333,6 +367,7 @@ async function selectDialog(dialog_id) {
     }
     hideSidebar();
     await fetchMessages(dialog_id);
+    messages.scrollTo(0, messages.scrollHeight);
 
     if(DIALOGS[dialog_id].unread_count > 0) {
         window._WS.send(JSON.stringify({

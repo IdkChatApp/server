@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-import json
 import os.path
 from os import environ
 from pathlib import Path
@@ -17,23 +16,16 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-json_settings = {}
-json_settings_path = Path(environ.get("JSON_SETTINGS", None) or BASE_DIR.parent / "settings.json")
-if json_settings_path.exists():
-    with open(BASE_DIR.parent / "settings.json", encoding="utf8") as f:
-        try: json_settings = json.load(f)
-        except: pass
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = environ.get("SECRET_KEY") or json_settings.get("SECRET_KEY", "django-insecure-#-!k733m0#t5xx%j#cu%8yp@j6+k61a_k-4s+x0d1j-!-jlye0")
-JWT_KEY = environ.get("JWT_KEY") or json_settings.get("JWT_KEY", SECRET_KEY)
+SECRET_KEY = environ.get("SECRET_KEY") or "django-insecure-#-!k733m0#t5xx%j#cu%8yp@j6+k61a_k-4s+x0d1j-!-jlye0"
+JWT_KEY = environ.get("JWT_KEY") or SECRET_KEY
 assert JWT_KEY is not None
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = json_settings.get("DEBUG", True)
+DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -95,8 +87,6 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
-
-DATABASES.update(json_settings.get("DATABASES", {}))
 
 
 # Password validation
@@ -162,12 +152,6 @@ CHANNEL_LAYERS = {
         },
     }
 }
-CHANNEL_LAYERS.update(json_settings.get("CHANNEL_LAYERS", {}))
-
-S3_BUCKET = json_settings.get("S3_BUCKET", None) or environ.get("S3_BUCKET")
-S3_ENDPOINT = json_settings.get("S3_ENDPOINT", None) or environ.get("S3_ENDPOINT")
-S3_ID = json_settings.get("S3_ID", None) or environ.get("S3_ID")
-S3_KEY = json_settings.get("S3_KEY", None) or environ.get("S3_KEY")
 
 STORAGES = {
     "default": {
@@ -184,3 +168,9 @@ AWS_SECRET_ACCESS_KEY = environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = environ.get("AWS_STORAGE_BUCKET_NAME")
 if None in (AWS_S3_ENDPOINT_URL, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME):
     del STORAGES["default"]
+
+try:
+    from .custom_settings import *
+    print("Settings from custom_settings.py are imported!")
+except ImportError:
+    pass
