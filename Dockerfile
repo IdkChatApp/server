@@ -15,5 +15,7 @@ RUN rm -r /root/.cache
 EXPOSE 8000
 ENV DJANGO_SETTINGS_MODULE=idkchat.settings
 
+RUN ["chmod", "+x", "./entrypoint.sh"]
+
 ENTRYPOINT ["./entrypoint.sh"]
 CMD [""]
