@@ -1,7 +1,8 @@
-.idea
-/_
-1.txt
-*.zip
-*.db
-*.sqlite3
-settings.json
+**/.idea
+**/*.db
+**/*.sqlite3
+**/custom_settings.py
+**/venv
+**/_static
+**/.git
+**/__pycache__

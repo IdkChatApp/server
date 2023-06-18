@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os.path
+import sys
 from os import environ
 from pathlib import Path
 
@@ -127,6 +128,7 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
+STATIC_ROOT = os.path.join(BASE_DIR, "_static/static") # Replace with your static files output directory
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -167,10 +169,11 @@ AWS_ACCESS_KEY_ID = environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = environ.get("AWS_STORAGE_BUCKET_NAME")
 if None in (AWS_S3_ENDPOINT_URL, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME):
-    del STORAGES["default"]
+    STORAGES["default"] = "django.core.files.storage.FileSystemStorage"
 
+sys.path.append('/idksettings')
 try:
-    from .custom_settings import *
-    print("Settings from custom_settings.py are imported!")
+    from custom_settings import *
+    print("Settings from /idksettings/custom_settings.py are imported!")
 except ImportError:
     pass
