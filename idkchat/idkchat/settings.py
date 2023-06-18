@@ -169,7 +169,7 @@ AWS_ACCESS_KEY_ID = environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = environ.get("AWS_STORAGE_BUCKET_NAME")
 if None in (AWS_S3_ENDPOINT_URL, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME):
-    STORAGES["default"] = "django.core.files.storage.FileSystemStorage"
+    STORAGES["default"]["BACKEND"] = "django.core.files.storage.FileSystemStorage"
 
 sys.path.append('/idksettings')
 try:
