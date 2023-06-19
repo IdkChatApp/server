@@ -148,12 +148,28 @@ async function signup() {
     location.href = "/dialogs";
 }
 
+async function checkToken() {
+    let resp = await fetch(`${window.API_ENDPOINT}/users/@me`, {
+        headers: {
+            "Authorization": localStorage.getItem("token"),
+        }
+    });
+    if(resp.status <= 404) {
+        removeCookie("token");
+        localStorage.removeItem("token");
+        localStorage.removeItem("encPrivKey");
+        localStorage.removeItem("KEY");
+    }
+    if(resp.status <= 299)
+        location.href = "/dialogs";
+}
+
 if (document.readyState !== 'loading') {
     if(localStorage.getItem("token"))
-        location.href = "/dialogs";
+        checkToken().then();
 } else {
     window.addEventListener("DOMContentLoaded", async () => {
         if(localStorage.getItem("token"))
-            location.href = "/dialogs";
+            await checkToken();
     }, false);
 }

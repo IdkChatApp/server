@@ -14,6 +14,7 @@ def index_page(request: HttpRequest) -> HttpResponse:
 def auth_page(request: HttpRequest) -> HttpResponse:
     return render(request, "auth.html")
 
+
 @require_auth
 def dialogs_page(request: HttpRequest, session: Session) -> HttpResponse:
     user = session.user

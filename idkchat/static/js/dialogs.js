@@ -102,22 +102,22 @@ class Dialog {
         this.unread_count = typeof(obj["unread_count"]) === "number" ? obj["unread_count"] : this.unread_count;
         await this.user.update(obj["user"]);
 
-        if(this.associatedObj === null) return;
+        if(this.associatedObj === null || this.associatedObj === undefined) return;
         let av = this.associatedObj.getElementsByClassName("user-avatar");
         let lg = this.associatedObj.getElementsByClassName("user-login");
         let uc = this.associatedObj.getElementsByClassName("unread-count");
         let mp = this.associatedObj.getElementsByClassName("message-text-preview");
 
-        if(av) av[0].src = avatarUrl(this.user.avatar);
-        if(lg) lg[0].innerHTML = `<b>${this.user.username}</b>`;
-        if(uc) {
+        if(av.length) av[0].src = avatarUrl(this.user.avatar);
+        if(lg.length) lg[0].innerHTML = `<b>${this.user.username}</b>`;
+        if(uc.length) {
             uc = uc[0];
             if(this.unread_count > 0 && uc.classList.contains("d-none")) uc.classList.remove("d-none");
             if(this.unread_count <= 0 && !uc.classList.contains("d-none")) uc.classList.add("d-none");
 
             uc.innerText = this.unread_count > 99 ? "99+" : this.unread_count.toString();
         }
-        if(mp && this._last_message !== null) {
+        if(mp.length && !!this._last_message) {
             mp = mp[0];
             mp.innerText = (this._last_message.author_id === USER_ID ? "You: " : "") + await this._last_message.text;
         }
@@ -199,8 +199,8 @@ async function addDialog(dialog) {
 
         let message_preview = `
         <p class="m-0 text-truncate message-text-preview">
-          ${dialog._last_message !== null && dialog._last_message.author_id === USER_ID ? "You: " : ""}
-          ${dialog._last_message !== null ? dialog._last_message.text : dialog._last_message}
+          ${!!dialog._last_message && dialog._last_message.author_id === USER_ID ? "You: " : ""}
+          ${!!dialog._last_message ? dialog._last_message.text : ""}
         </p>
         `;
 

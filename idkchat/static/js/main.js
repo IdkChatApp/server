@@ -15,11 +15,9 @@ if(isLocalNetwork()) {
     window.WS_ENDPOINT = "ws://127.0.0.1:8000/ws";
 } else {
     // Production enviroment
-    window.API_ENDPOINT = "https://idkchat-api.pepega.ml/api";
-    window.WS_ENDPOINT = "wss://idkchat-api.pepega.ml/ws";
+    window.API_ENDPOINT = `https://${window.location.hostname}/api`;
+    window.WS_ENDPOINT = `wss://${window.location.hostname}/ws`;
 }
-window.CDN = "https://link.storjshare.io/s/jwadfbzk4qjnfgqwp52yzhryzata/idkchat";
-window.AVATAR_QUERY = "wrap=0"
 window.DEFAULT_AVATAR = "/static/img/no-avatar.png";
 
 // Solution to not working DOMContentLoaded on Cloudflare when both HTML Minify and Rocker Loader are on.

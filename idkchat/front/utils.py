@@ -10,7 +10,6 @@ from api.utils import JWT
 def _require_auth(func, self, request: HttpRequest, *args, **kwargs):
     auth_redirect = HttpResponseRedirect("/auth")
     auth_redirect.delete_cookie("token")
-    auth_redirect.set_cookie("redirect_path", request.get_full_path())
 
     token = request.COOKIES.get("token")
     secret = getattr(settings, "JWT_KEY")
