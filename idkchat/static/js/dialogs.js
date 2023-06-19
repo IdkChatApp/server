@@ -6,6 +6,7 @@ const dUserName = document.getElementById("adddial_userName");
 const selDialogContainer = document.getElementById("selDialogContainer");
 const actualDialogContainer = document.getElementById("actualDialogContainer");
 const newDialogModal = document.getElementById("newDialogModal");
+const newDialogAlertContainer = document.getElementById("newDialogAlertContainer");
 const sidebar = document.getElementById("sidebar");
 const content = document.getElementById("content");
 const crypt = new OpenCrypto();
@@ -399,10 +400,13 @@ async function newDialog() {
         location.href = "/auth";
     }
     let jsonResp = await resp.json();
-    if(resp.status >= 400 && resp.status < 405) {
-        alert(jsonResp.message);
-        return;
+    if(resp.status >= 400 && resp.status < 499) {
+        return showAlert(jsonResp, newDialogAlertContainer);
     }
+    if(resp.status > 499) {
+        return showAlert(`Unknown response (status code ${resp.status})! Please try again later.`, newDialogAlertContainer);
+    }
+
     let other_user = User.new(jsonResp);
     USERS[other_user.id] = other_user;
 

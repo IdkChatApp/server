@@ -11,8 +11,8 @@ function isLocalNetwork(hostname = window.location.hostname) {
 
 if(isLocalNetwork()) {
     // Local enviroment
-    window.API_ENDPOINT = "http://127.0.0.1:8000/api";
-    window.WS_ENDPOINT = "ws://127.0.0.1:8000/ws";
+    window.API_ENDPOINT = `http://${window.location.host}/api`;
+    window.WS_ENDPOINT = `ws://${window.location.host}/ws`;
 } else {
     // Production enviroment
     window.API_ENDPOINT = `https://${window.location.hostname}/api`;

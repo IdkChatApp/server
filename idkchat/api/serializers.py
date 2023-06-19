@@ -1,5 +1,6 @@
 from typing import Optional
 
+from django.core.exceptions import SynchronousOnlyOperation
 from django.core.files.images import get_image_dimensions
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.validators import RegexValidator
@@ -113,7 +114,10 @@ class DialogSerializer(serializers.ModelSerializer): # TODO: Add `recipients` fi
 
     def _last_message(self, obj: Dialog) -> Optional[dict]:
         last_message: Optional[Message] = self.context.get("last_message")
-        if not last_message: last_message = obj.last_message()
+        try:
+            if not last_message: last_message = obj.last_message()
+        except SynchronousOnlyOperation:
+            return None
         if last_message is not None: return MessageSerializer(last_message).data
 
     class Meta:
