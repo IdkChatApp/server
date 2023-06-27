@@ -37,12 +37,13 @@ function avatarUrl(avatar) {
     return avatar;
 }
 
-function sortedIndex(array, value) {
+function sortedIndex(array, value, key) {
+    if(key === undefined) key = (val) => val;
     let low = 0, high = array.length;
 
     while (low < high) {
         let mid = (low + high) >>> 1;
-        if (array[mid] < value) low = mid + 1;
+        if (key(array[mid]) < key(value)) low = mid + 1;
         else high = mid;
     }
     return low;

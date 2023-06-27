@@ -26,26 +26,7 @@
         <button type="button" class="btn-close btn-close-white d-sm-none d-block" onclick="hideSidebar();"></button>
       </div>
       <hr>
-      <ul class="nav d-block nav-pills mb-auto overflow-y-scroll" id="dialogsContainer">
-        {% for dialog in dialogs %}
-          {% with dialog|other_user:user as other_user %}
-            <li class="nav-item w-100" id="dialog-id-{{ dialog.id }}">
-              <a href="#" class="d-flex align-items-center text-white text-decoration-none nav-link" onclick="selectDialog({{ dialog.id }});">
-                <div class="avatar-container">
-                  <img src="{% if other_user.avatar %} {{ other_user.avatar.url }} {% else %} /static/img/no-avatar.png {% endif %}" alt="User avatar" width="32" height="32" class="rounded-circle me-2 user-avatar">
-                  <span class="badge rounded-pill bg-danger unread-count{% if dialog|unread_count:user <= 0 %} d-none{% endif %}">
-                    {% if dialog|unread_count:user > 99 %}99+{% else %}{{ dialog|unread_count:user }}{% endif %}
-                  </span>
-                </div>
-                <div class="w-100 text-truncate">
-                  <p class="text-truncate m-0 user-login" title="{{ other_user.login }}"><b>{{ other_user.login }}</b></p>
-                  <p class="m-0 text-truncate message-text-preview"></p>
-                </div>
-              </a>
-            </li>
-          {% endwith %}
-        {% endfor %}
-      </ul>
+      <ul class="nav d-block nav-pills mb-auto overflow-y-scroll" id="dialogsContainer"></ul>
       <hr>
       <div class="dropdown">
         <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">

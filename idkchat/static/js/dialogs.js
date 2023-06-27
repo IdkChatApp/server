@@ -22,7 +22,8 @@ delete t;
 
 window.DIALOGS = {};
 window.USERS = {};
-window.MESSAGES = [];
+window.CURRENT_MESSAGES = [];
+window.DIALOGS_SORTED = [];
 window.CURRENT_DIALOG = 0;
 window._WS = null;
 
@@ -37,6 +38,7 @@ class User {
     }
 
     async update(obj) {
+        if(!obj) return;
         this.username = obj["username"] || this.username;
         this.avatar = obj["avatar"] || this.avatar;
     }
@@ -128,7 +130,7 @@ class Dialog {
         if(obj instanceof Dialog) return obj;
         if(!(obj["id"] in DIALOGS))
             DIALOGS[obj["id"]] = new this(obj["id"], obj["key"], User.new(obj["user"]), obj["unread_count"]);
-        DIALOGS[obj["id"]]._last_message = Message.new(obj["last_message"]);
+        DIALOGS[obj["id"]]._last_message = Message.new(obj["last_message"], DIALOGS[obj["id"]]);
         return DIALOGS[obj["id"]];
     }
 }
@@ -172,7 +174,7 @@ class Message {
     }
 
     static new(obj, dialog) {
-        if(!obj || ! dialog) return;
+        if(!obj || !dialog) return;
         if(obj instanceof Message) return obj;
         dialog = Dialog.new(dialog);
         if(!(obj["id"] in dialog.messages))
@@ -193,17 +195,16 @@ async function addDialog(dialog) {
         dialogs.appendChild(dialog_el);
 
         let unread_badge = `
-        <span class="badge rounded-pill bg-danger unread-count${dialog.unread_count > 0 ? " d-none" : ""}">
-          ${dialog.unread_count > 99 ? "99+": dialog.unread_count}
+        <span class="badge rounded-pill bg-danger unread-count${dialog.unread_count > 0 ? "" : " d-none"}">
+          ${dialog.unread_count > 99 ? "99+" : dialog.unread_count}
         </span>
         `;
 
-        let message_preview = `
-        <p class="m-0 text-truncate message-text-preview">
-          ${!!dialog._last_message && dialog._last_message.author_id === USER_ID ? "You: " : ""}
-          ${!!dialog._last_message ? dialog._last_message.text : ""}
-        </p>
-        `;
+        let message_preview = `<p class="m-0 text-truncate message-text-preview">...</p>`;
+        if(dialog._last_message)
+            dialog._last_message.text.then(async () => {
+                await dialog.update({});
+            });
 
         dialog_el.outerHTML = `
         <li class="nav-item w-100" id="dialog-id-${dialog_id}">
@@ -219,9 +220,22 @@ async function addDialog(dialog) {
           </a>
         </li>
         `;
+        dialog_el = document.getElementById(`dialog-id-${dialog_id}`);
     }
-    DIALOGS[dialog_id].associatedObj = dialog_el;
-    await DIALOGS[dialog_id].update(_dialog);
+
+    dialog.associatedObj = dialog_el;
+    dialog.update(_dialog);
+
+    let idx = sortedIndex(DIALOGS_SORTED, dialog, (dialog) => Date.now() - (dialog._last_message ? dialog._last_message.id : 0));
+    DIALOGS_SORTED.splice(idx, 0, dialog);
+
+    let insertLast = idx === DIALOGS_SORTED.length-1;
+    let before = DIALOGS_SORTED[idx+1];
+    before = before ? before.associatedObj : undefined;
+    if(insertLast || !before)
+        dialogs.appendChild(dialog_el);
+    else
+        dialogs.insertBefore(dialog_el, before);
 }
 
 function clearMessages() {
@@ -244,12 +258,12 @@ async function addMessage(dialog_id, message) {
     if(document.getElementById(`message-id-${message_id}`))
         return;
 
-    let idx = sortedIndex(MESSAGES, message_id);
-    MESSAGES.splice(idx, 0, message_id);
+    let idx = sortedIndex(CURRENT_MESSAGES, message_id);
+    CURRENT_MESSAGES.splice(idx, 0, message_id);
 
     let message_el = document.createElement("li");
-    let insertLast = idx === MESSAGES.length-1;
-    let before = MESSAGES[idx+1];
+    let insertLast = idx === CURRENT_MESSAGES.length-1;
+    let before = CURRENT_MESSAGES[idx+1];
     before = document.getElementById(`message-id-${before}`);
     if(insertLast || !before)
         messages.appendChild(message_el);
@@ -359,7 +373,7 @@ async function selectDialog(dialog_id) {
     actualDialogContainer.classList.add("d-flex")
     actualDialogContainer.classList.remove("d-none");
 
-    window.MESSAGES = [];
+    window.CURRENT_MESSAGES = [];
     clearMessages();
 
     window.CURRENT_DIALOG = dialog_id;

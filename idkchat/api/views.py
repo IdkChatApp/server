@@ -6,7 +6,7 @@ from uuid import uuid4
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Max
 from rest_framework import permissions, status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -84,7 +84,8 @@ class LoginView(APIView):
         pauth.delete()
 
         if not (
-        HAMK := srp.verifyChallenge(int("0x" + serializer.data["A"], 16), int("0x" + serializer.data["M"], 16))):
+                HAMK := srp.verifyChallenge(int("0x" + serializer.data["A"], 16),
+                                            int("0x" + serializer.data["M"], 16))):
             return Response(
                 {"non_field_errors": ["Invalid login or password."]},
                 status=status.HTTP_400_BAD_REQUEST
@@ -121,13 +122,17 @@ class LogoutView(APIView):
 class DialogsView(APIView):
     class MinRateThrottle(UserRateThrottle):
         rate = "30/minute"
+
     class MaxRateThrottle(UserRateThrottle):
         rate = "300/day"
+
     throttle_classes = [MinRateThrottle, MaxRateThrottle]
 
     def get(self, request: Request) -> Response:
         user = request.user
-        dialogs: list[Dialog] = Dialog.objects.filter(Q(user_1__id=user.id) | Q(user_2__id=user.id))
+        dialogs: list[Dialog] = Dialog.objects.filter(Q(user_1=user) | Q(user_2=user)) \
+            .annotate(_last_message=Max("message__created_at")) \
+            .order_by("-_last_message")
         dialogs_json = [DialogSerializer(dialog, context={"current_user": user}).data for dialog in dialogs]
         return Response(dialogs_json)
 
@@ -155,7 +160,8 @@ class DialogsView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        q = (Q(user_1__id=user.id) & Q(user_2__id=other_user.id)) | (Q(user_1__id=other_user.id) & Q(user_2__id=user.id))
+        q = (Q(user_1__id=user.id) & Q(user_2__id=other_user.id)) | (
+                    Q(user_1__id=other_user.id) & Q(user_2__id=user.id))
         dialog = Dialog.objects.filter(q).first() or \
                  Dialog.objects.create(user_1=user, user_2=other_user, key_1=this_key, key_2=other_key)
         return Response(DialogSerializer(dialog, context={"current_user": user}).data)
@@ -165,8 +171,10 @@ class DialogsView(APIView):
 class MessagesView(APIView):
     class MinRateThrottle(UserRateThrottle):
         rate = "5/second"
+
     class MaxRateThrottle(UserRateThrottle):
         rate = "20/minute"
+
     throttle_classes = [MinRateThrottle, MaxRateThrottle]
 
     def get(self, request: Request, dialog_id: int) -> Response:
@@ -245,8 +253,10 @@ class UsersMeView(APIView):
 class GetUserByName(APIView):
     class MinRateThrottle(UserRateThrottle):
         rate = "30/minute"
+
     class MaxRateThrottle(UserRateThrottle):
         rate = "150/day"
+
     throttle_classes = [MinRateThrottle, MaxRateThrottle]
 
     def post(self, request: Request) -> Response:
@@ -266,11 +276,12 @@ class GetUserByName(APIView):
 class ChangePasswordView(APIView):
     class RateThrottle(UserRateThrottle):
         rate = "10/day"
+
     throttle_classes = [RateThrottle]
-    
+
     def get(self, request: Request) -> Response:
         user = request.user
-        
+
         srp = Verifier(user.login, bytes.fromhex(user.salt), int("0x" + user.verifier, 16), sha256, NG.NG_2048)
         salt, B = srp.getChallenge()
 
@@ -284,7 +295,7 @@ class ChangePasswordView(APIView):
         }, secret, time() + 10)
 
         return Response({"ticket": ticket, "salt": salt.hex(), "B": hex(B)})
-    
+
     def post(self, request: Request) -> Response:
         serializer = ChangePasswordSerializer(data=request.data)
         if not serializer.is_valid():
@@ -323,4 +334,3 @@ class ChangePasswordView(APIView):
         user.save()
 
         return Response(status=204)
-    
