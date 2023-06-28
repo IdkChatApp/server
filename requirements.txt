@@ -10,3 +10,4 @@ django-storages~=1.13.2
 boto3~=1.26.147
 drf-extra-fields~=3.5.0
 mysqlclient~=2.1.1
+django-channels-presence @ git+https://github.com/RuslanUC/django-channels-presence@master

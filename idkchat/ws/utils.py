@@ -5,3 +5,12 @@ class WS_OP:
     CREATE_MESSAGE = 1
     MARK_AS_READ = 2
     DIALOG_UPDATE = 3
+    HEARTBEAT = 4
+    HEARTBEAT_ACK = 5
+    HELLO = 6
+
+
+class WSClose:
+    INVALID_MESSAGE = 4000
+    UNAUTHORIZED = 4001
+    TIMEOUT = 4002

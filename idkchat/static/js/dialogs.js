@@ -481,9 +481,19 @@ function _ws_handle_dialog_update(data) {
     addDialog(data).then();
 }
 
+function _ws_handle_hello(data) {
+    window._HEARTBEAT_INTERVAL = setInterval(() => {
+        window._WS.send(JSON.stringify({
+            "op": 4,
+            "d": null
+        }));
+    }, data["heartbeat_interval"]);
+}
+
 window.WS_HANDLERS = {
     1: _ws_handle_new_message,
-    3: _ws_handle_dialog_update
+    3: _ws_handle_dialog_update,
+    6: _ws_handle_hello,
 }
 
 function initWs() {
@@ -511,6 +521,8 @@ function initWs() {
             location.href = "/auth";
             return;
         }
+        if(window._HEARTBEAT_INTERVAL)
+            clearInterval(window._HEARTBEAT_INTERVAL);
         setTimeout(() => {
             fetchDialogs().then();
             initWs();

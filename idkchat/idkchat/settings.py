@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "front",
     "api",
     "ws",
+    "channels_presence",
 ]
 
 MIDDLEWARE = [
@@ -128,7 +129,7 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, "/idkstatic/static") # Replace with your static files output directory
+STATIC_ROOT = os.path.join(BASE_DIR, "/idkstatic/static")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -163,6 +164,8 @@ STORAGES = {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
+
+AUTH_USER_MODEL = "api.User"
 
 AWS_S3_ENDPOINT_URL = environ.get("AWS_S3_ENDPOINT_URL")
 AWS_ACCESS_KEY_ID = environ.get("AWS_ACCESS_KEY_ID")

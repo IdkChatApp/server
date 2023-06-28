@@ -46,8 +46,11 @@ class User(BaseModel):
     def __repr__(self) -> str:
         return f"User(id={self.id!r}, login={self.login!r})"
 
-    def is_authenticated(self) -> bool:
-        return True
+    is_authenticated = True
+    is_anonymous = False
+
+    REQUIRED_FIELDS = ("salt", "verifier", "privKey", "pubKey",)
+    USERNAME_FIELD = "login"
 
 
 class Session(BaseModel):
