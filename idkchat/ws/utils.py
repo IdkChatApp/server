@@ -8,6 +8,8 @@ class WS_OP:
     HEARTBEAT = 4
     HEARTBEAT_ACK = 5
     HELLO = 6
+    PRESENCES = 7
+    READY = 8
 
 
 class WSClose:

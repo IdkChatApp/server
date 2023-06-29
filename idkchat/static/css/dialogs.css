@@ -57,6 +57,16 @@ html, body {
     position: absolute;
 }
 
+.status-indicator {
+    font-size: xx-small!important;
+    bottom: -10%;
+    right: 12%;
+    animation: fade 0.25s linear;
+    position: absolute;
+    background-color: #19FF00;
+    color: #19FF00!important;
+}
+
 @keyframes fade {
     0% { opacity: 0 }
     50% { opacity: 1 }

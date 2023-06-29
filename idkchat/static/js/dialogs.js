@@ -21,6 +21,7 @@ window.PUBKEY = t["pubKey"];
 delete t;
 
 window.DIALOGS = {};
+window.DIALOGS_BY_USERS = {};
 window.USERS = {};
 window.CURRENT_MESSAGES = [];
 window.DIALOGS_SORTED = [];
@@ -35,6 +36,7 @@ class User {
         this.avatar = avatar;
         this._pubKey = pubKey;
         this.pubKey = null;
+        this.status = "offline";
     }
 
     async update(obj) {
@@ -110,6 +112,7 @@ class Dialog {
         let lg = this.associatedObj.getElementsByClassName("user-login");
         let uc = this.associatedObj.getElementsByClassName("unread-count");
         let mp = this.associatedObj.getElementsByClassName("message-text-preview");
+        let si = this.associatedObj.getElementsByClassName("status-indicator");
 
         if(av.length) av[0].src = avatarUrl(this.user.avatar);
         if(lg.length) lg[0].innerHTML = `<b>${this.user.username}</b>`;
@@ -124,12 +127,17 @@ class Dialog {
             mp = mp[0];
             mp.innerText = (this._last_message.author_id === USER_ID ? "You: " : "") + await this._last_message.text;
         }
+        if(si.length) {
+            this.user.status === "online" ? si[0].classList.remove("d-none") : si[0].classList.add("d-none");
+        }
     }
 
     static new(obj) {
         if(obj instanceof Dialog) return obj;
-        if(!(obj["id"] in DIALOGS))
-            DIALOGS[obj["id"]] = new this(obj["id"], obj["key"], User.new(obj["user"]), obj["unread_count"]);
+        if(!(obj["id"] in DIALOGS)) {
+            let user = User.new(obj["user"]);
+            DIALOGS[obj["id"]] = DIALOGS_BY_USERS[user.id] = new this(obj["id"], obj["key"], user, obj["unread_count"]);
+        }
         DIALOGS[obj["id"]]._last_message = Message.new(obj["last_message"], DIALOGS[obj["id"]]);
         return DIALOGS[obj["id"]];
     }
@@ -212,6 +220,7 @@ async function addDialog(dialog) {
             <div class="avatar-container">
               <img src="${avatarUrl(user.avatar)}" alt="User avatar" width="32" height="32" class="rounded-circle me-2 user-avatar">
               ${unread_badge}
+              <span class="badge rounded-pill status-indicator d-none">.</span>
             </div>
             <div class="w-100 text-truncate">
               <p class="text-truncate m-0 user-login" title="${user.username}"><b>${user.username}</b></p>
@@ -490,10 +499,31 @@ function _ws_handle_hello(data) {
     }, data["heartbeat_interval"]);
 }
 
+async function _ws_handle_presence(data) {
+    let presences_changed = data["presences_changed"];
+    for(let presence of presences_changed) {
+        let user_id = presence["user_id"];
+        USERS[user_id].status = presence["status"];
+        console.log(`SET ${user_id} TO ${presence["status"]}`)
+        await DIALOGS_BY_USERS[user_id].update({});
+    }
+}
+
+function _ws_handle_ready(data) {
+    window._WS.send(JSON.stringify({
+        "op": 7,
+        "d": {
+            "subscribe_users": Object.keys(USERS).map((e) => { return Number(e) })
+        }
+    }));
+}
+
 window.WS_HANDLERS = {
     1: _ws_handle_new_message,
     3: _ws_handle_dialog_update,
     6: _ws_handle_hello,
+    7: _ws_handle_presence,
+    8: _ws_handle_ready,
 }
 
 function initWs() {
@@ -524,8 +554,7 @@ function initWs() {
         if(window._HEARTBEAT_INTERVAL)
             clearInterval(window._HEARTBEAT_INTERVAL);
         setTimeout(() => {
-            fetchDialogs().then();
-            initWs();
+            fetchDialogs().then(initWs);
         }, 1000);
     });
 }
@@ -536,9 +565,7 @@ async function initPubKey() {
 
 if (document.readyState !== 'loading') {
     initPubKey().then(() => {
-        fetchDialogs().then(() => {
-            initWs();
-        });
+        fetchDialogs().then(initWs);
     })
 } else {
     window.addEventListener("DOMContentLoaded",  async () => {
