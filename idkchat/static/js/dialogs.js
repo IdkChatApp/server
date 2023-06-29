@@ -504,7 +504,6 @@ async function _ws_handle_presence(data) {
     for(let presence of presences_changed) {
         let user_id = presence["user_id"];
         USERS[user_id].status = presence["status"];
-        console.log(`SET ${user_id} TO ${presence["status"]}`)
         await DIALOGS_BY_USERS[user_id].update({});
     }
 }
